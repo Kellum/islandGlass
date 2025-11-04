@@ -1,0 +1,116 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.Python
+venv/
+env/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+
+# Dash
+# (Keep assets/ and .streamlit/config.toml in git)
+
+# Streamlit
+.streamlit/secrets.toml
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# Data & Backups
+*.db
+*.sqlite
+*.sqlite3
+data/*.csv
+backups/
+*.backup
+*.dump
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Label Output (development)
+labels_output/*.zpl
+labels_output/*.png
+# Keep the directory
+!labels_output/.gitkeep
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+site/
+
+# Database backups
+database/backups/
+*.sql.backup
+
+# Local development
+.local/
+local_settings.py
+
+# Secrets & Keys
+secrets.toml
+*.key
+*.pem
+credentials.json
+
+# Railway specific
+.railway/
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Windows
+desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*

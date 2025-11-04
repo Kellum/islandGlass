@@ -1,0 +1,96 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2865
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0  Perfect! Yes, this is absolutely possible. The Anthropic API returns token usage data with every response,\
+  which includes:\
+  - response.usage.input_tokens - tokens in your prompt\
+  - response.usage.output_tokens - tokens in Claude's response\
+\
+  Let me plan out a comprehensive token tracking system for you.\
+                                                                                     \
+\uc0\u9210 User approved Claude's plan:\
+  \uc0\u9151   Token Usage Tracking Implementation Plan\
+\
+     1. Database Schema - New Table\
+\
+     Create api_usage table to track every API call:\
+     - id - Auto-increment primary key\
+     - contractor_id - Links to contractor (nullable for future non-contractor calls)\
+     - action_type - "enrichment" | "email_generation" | "script_generation"\
+     - model - claude-sonnet-4-20250514\
+     - input_tokens - Tokens in prompt\
+     - output_tokens - Tokens in response\
+     - total_tokens - Sum of input + output\
+     - estimated_cost - Calculated cost in USD\
+     - timestamp - When the call was made\
+     - success - Boolean (true/false)\
+\
+     2. Modify Enrichment Module (modules/enrichment.py)\
+\
+     Update analyze_with_claude() method:\
+     - Capture response.usage.input_tokens and response.usage.output_tokens\
+     - Calculate cost based on Claude Sonnet pricing\
+     - Insert record into api_usage table\
+     - Return token info alongside enrichment data\
+\
+     3. Modify Outreach Module (modules/outreach.py)\
+\
+     Update both generation methods:\
+     - generate_email_templates() - Track email generation tokens\
+     - generate_call_scripts() - Track script generation tokens\
+     - Insert records into api_usage table for each call\
+     - Return token usage in result dict\
+\
+     4. Add Database Methods (modules/database.py)\
+\
+     New methods:\
+     - log_api_usage() - Insert usage record\
+     - get_api_usage_stats() - Get total tokens/cost by period\
+     - get_contractor_api_usage() - Get usage for specific contractor\
+     - get_usage_by_action_type() - Break down by action type\
+\
+     5. Update Settings Page (app.py)\
+\
+     Add API Usage Dashboard:\
+     - Total Usage: All-time tokens and estimated cost\
+     - This Month: Current month tokens and cost\
+     - By Action Type: Enrichment vs Outreach breakdown\
+     - Top Contractors: Which contractors used most tokens\
+     - Cost Alerts: Warning when approaching credit limits\
+     - Usage Chart: Daily/weekly token usage visualization\
+     - Per-Contractor View: Detailed breakdown by contractor\
+\
+     6. Pricing Information\
+\
+     Claude Sonnet 4 Pricing (as of Oct 2024):\
+     - Input: $3 per million tokens\
+     - Output: $15 per million tokens\
+     - Include pricing constants in code for easy updates\
+\
+     7. Additional Features\
+\
+     - Add token usage to contractor detail page (show cost per contractor)\
+     - Export token usage to CSV in Bulk Actions\
+     - Alert when API usage exceeds threshold\
+     - Show remaining credits estimate based on usage\
+\
+     Benefits:\
+\
+     \uc0\u9989  Track costs per contractor for ROI analysis\
+     \uc0\u9989  Identify which actions consume most tokens\
+     \uc0\u9989  Predict when to reload API credits\
+     \uc0\u9989  Optimize prompts to reduce token usage\
+     \uc0\u9989  Budget planning and cost forecasting\
+\
+     Files to modify:\
+     1. supabase_schema.sql - Add api_usage table\
+     2. modules/enrichment.py - Add token tracking (1 location)\
+     3. modules/outreach.py - Add token tracking (2 locations)\
+     4. modules/database.py - Add usage query methods\
+     5. app.py - Build Settings page with usage dashboard\
+\
+     Estimated time: 30-45 minutes to implement all components}

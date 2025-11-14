@@ -20,12 +20,21 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60  # 1 hour
 REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
 # CORS Configuration
+# In production, allow Railway URL via environment variable
+RAILWAY_URL = os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
 ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React dev server
     "http://localhost:3001",  # React dev server (alternate port)
     "http://localhost:5173",  # Vite dev server
     "http://localhost:8050",  # Old Dash app (for transition)
 ]
+
+# Add Railway URL if provided (Railway auto-sets this)
+if RAILWAY_URL:
+    ALLOWED_ORIGINS.extend([
+        f"https://{RAILWAY_URL}",
+        f"http://{RAILWAY_URL}",
+    ])
 
 # File Upload Configuration
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB

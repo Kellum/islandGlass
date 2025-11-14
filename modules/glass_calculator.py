@@ -2,21 +2,22 @@
 Glass pricing calculator module
 Implements all pricing formulas from GlassPricePro
 
-ULTIMATE FORMULA: Final Quote Price = Combined Cost ÷ 0.28
+ULTIMATE FORMULA: Final Quote Price = Combined Cost ÷ 0.28 (configurable)
 """
 
 from typing import Dict, Optional, Any
 import math
+import re
 
 
 class GlassPriceCalculator:
     """
     Calculate glass prices based on GlassPricePro formulas
 
-    ULTIMATE FORMULA: Final Quote Price = Combined Cost ÷ 0.28
+    ULTIMATE FORMULA: Final Quote Price = Combined Cost ÷ markup_divisor
 
     Formula breakdown:
-    1. Square footage = (width × height) ÷ 144  [min 3 sq ft]
+    1. Square footage = (width × height) ÷ 144  [min configurable sq ft]
     2. Base price = sq_ft × base_rate
     3. Perimeter = 2 × (width + height)  [or π × diameter for circular]
     4. Edge costs = perimeter × edge_rate
@@ -24,14 +25,10 @@ class GlassPriceCalculator:
     6. Tempered markup = before_markups × tempered%
     7. Shape markup = before_markups × shape%
     8. Subtotal = before_markups + tempered + shape
-    9. Contractor discount = subtotal × 15%
+    9. Contractor discount = subtotal × configurable%
     10. Total = (subtotal - discount) × quantity
-    11. QUOTE PRICE = total ÷ 0.28
+    11. QUOTE PRICE = total ÷ markup_divisor
     """
-
-    MINIMUM_SQ_FT = 3.0
-    MARKUP_DIVISOR = 0.28
-    CONTRACTOR_DISCOUNT_RATE = 0.15
 
     def __init__(self, config: Dict[str, Any]):
         """
@@ -43,8 +40,152 @@ class GlassPriceCalculator:
                 - markups: Dict[str, float] - tempered%, shape%
                 - beveled_pricing: Dict[str, float] - rates by thickness
                 - clipped_corners_pricing: Dict[str, Dict] - rates by thickness/size
+                - settings: Dict[str, float] - system constants (minimum_sq_ft, markup_divisor, etc.)
+                - formula_config: Dict[str, Any] - pricing formula configuration (optional)
         """
         self.config = config
+
+        # Load system settings (with fallback defaults)
+        settings = config.get('settings', {})
+        self.MINIMUM_SQ_FT = settings.get('minimum_sq_ft', 3.0)
+        self.MARKUP_DIVISOR = settings.get('markup_divisor', 0.28)
+        self.CONTRACTOR_DISCOUNT_RATE = settings.get('contractor_discount_rate', 0.15)
+        self.FLAT_POLISH_RATE = settings.get('flat_polish_rate', 0.27)
+
+        # Load formula configuration (with fallback defaults)
+        self.formula_config = config.get('formula_config', {
+            'formula_mode': 'divisor',
+            'divisor_value': 0.28,
+            'multiplier_value': 3.5714,
+            'custom_expression': None,
+            'enable_base_price': True,
+            'enable_polish': True,
+            'enable_beveled': True,
+            'enable_clipped_corners': True,
+            'enable_tempered_markup': True,
+            'enable_shape_markup': True,
+            'enable_contractor_discount': True
+        })
+
+    def validate_custom_formula(self, expression: str) -> tuple[bool, str]:
+        """
+        Validate a custom formula expression for safety
+
+        Args:
+            expression: Python expression string (e.g., "total * 3.5 + 10")
+
+        Returns:
+            (is_valid, error_message) tuple
+        """
+        if not expression or not expression.strip():
+            return False, "Expression cannot be empty"
+
+        # Check for dangerous patterns
+        dangerous_patterns = [
+            r'import\s',
+            r'__\w+__',
+            r'exec\s*\(',
+            r'eval\s*\(',
+            r'open\s*\(',
+            r'file\s*\(',
+            r'compile\s*\(',
+            r'globals\s*\(',
+            r'locals\s*\(',
+            r'vars\s*\(',
+            r'dir\s*\(',
+            r'getattr\s*\(',
+            r'setattr\s*\(',
+            r'delattr\s*\(',
+        ]
+
+        for pattern in dangerous_patterns:
+            if re.search(pattern, expression, re.IGNORECASE):
+                return False, f"Expression contains forbidden operation: {pattern}"
+
+        # Test evaluation with a sample value
+        try:
+            # Create safe namespace with only allowed operations
+            safe_namespace = {
+                'total': 100.0,
+                'abs': abs,
+                'min': min,
+                'max': max,
+                'round': round,
+                '__builtins__': {}
+            }
+            result = eval(expression, safe_namespace)
+
+            # Check result is a valid number
+            if not isinstance(result, (int, float)):
+                return False, "Expression must return a numeric value"
+
+            if result < 0:
+                return False, "Expression produced a negative result"
+
+            if math.isnan(result) or math.isinf(result):
+                return False, "Expression produced an invalid result (NaN or Inf)"
+
+            return True, ""
+
+        except ZeroDivisionError:
+            return False, "Expression causes division by zero"
+        except Exception as e:
+            return False, f"Invalid expression: {str(e)}"
+
+    def apply_pricing_formula(self, total: float) -> float:
+        """
+        Apply the configured pricing formula to calculate final quote price
+
+        Args:
+            total: Combined cost before final markup
+
+        Returns:
+            Final quote price
+        """
+        mode = self.formula_config.get('formula_mode', 'divisor')
+
+        if mode == 'divisor':
+            divisor = self.formula_config.get('divisor_value', 0.28)
+            if divisor == 0:
+                # Prevent division by zero, fallback to default
+                divisor = 0.28
+            return total / divisor
+
+        elif mode == 'multiplier':
+            multiplier = self.formula_config.get('multiplier_value', 3.5714)
+            return total * multiplier
+
+        elif mode == 'custom':
+            expression = self.formula_config.get('custom_expression')
+            if not expression:
+                # Fallback to divisor mode
+                return total / 0.28
+
+            # Validate before evaluating
+            is_valid, error = self.validate_custom_formula(expression)
+            if not is_valid:
+                print(f"Custom formula validation failed: {error}. Using default.")
+                return total / 0.28
+
+            try:
+                # Safe evaluation with restricted namespace
+                safe_namespace = {
+                    'total': total,
+                    'abs': abs,
+                    'min': min,
+                    'max': max,
+                    'round': round,
+                    '__builtins__': {}
+                }
+                result = eval(expression, safe_namespace)
+                return float(result)
+            except Exception as e:
+                print(f"Error evaluating custom formula: {e}. Using default.")
+                return total / 0.28
+
+        else:
+            # Unknown mode, use default
+            return total / 0.28
 
     def calculate_square_footage(
         self,
@@ -52,7 +193,7 @@ class GlassPriceCalculator:
         height: float,
         is_circular: bool = False,
         diameter: Optional[float] = None
-    ) -> float:
+    ) -> Dict[str, float]:
         """
         Calculate square footage with minimum billable
 
@@ -63,15 +204,20 @@ class GlassPriceCalculator:
             diameter: Diameter in inches (for circular glass)
 
         Returns:
-            Square footage (minimum 3 sq ft)
+            Dict with 'actual_sq_ft' and 'billable_sq_ft' (minimum 3 sq ft)
         """
         if is_circular and diameter:
             radius = diameter / 2
-            sq_ft = (math.pi * radius ** 2) / 144
+            actual_sq_ft = (math.pi * radius ** 2) / 144
         else:
-            sq_ft = (width * height) / 144
+            actual_sq_ft = (width * height) / 144
 
-        return max(sq_ft, self.MINIMUM_SQ_FT)
+        billable_sq_ft = max(actual_sq_ft, self.MINIMUM_SQ_FT)
+
+        return {
+            'actual_sq_ft': actual_sq_ft,
+            'billable_sq_ft': billable_sq_ft
+        }
 
     def calculate_perimeter(
         self,
@@ -138,7 +284,7 @@ class GlassPriceCalculator:
             Polish price
         """
         if is_flat_polish:
-            rate = 0.27  # Flat polish default for mirrors
+            rate = self.FLAT_POLISH_RATE  # Use configurable flat polish rate for mirrors
         else:
             key = f"{thickness}_{glass_type}"
             rate = self.config['glass_config'].get(key, {}).get('polish_price', 0)
@@ -260,6 +406,49 @@ class GlassPriceCalculator:
 
         return subtotal * self.CONTRACTOR_DISCOUNT_RATE
 
+    def validate_quote_params(
+        self,
+        thickness: str,
+        glass_type: str,
+        is_polished: bool,
+        is_beveled: bool,
+        is_tempered: bool,
+        num_clipped_corners: int,
+        is_circular: bool
+    ) -> Optional[str]:
+        """
+        Validate quote parameters against business rules
+
+        Returns:
+            Error message string if invalid, None if valid
+        """
+        # Rule 1: 1/8" glass cannot have ANY edge work (no polish, no bevel, no tempered)
+        if thickness == '1/8"':
+            if is_tempered:
+                return "1/8\" glass cannot be tempered"
+            if is_polished:
+                return "1/8\" glass cannot be polished"
+            if is_beveled:
+                return "1/8\" glass cannot have beveled edges"
+
+        # Rule 2: 1/8" glass cannot be mirror
+        if thickness == '1/8"' and glass_type == 'mirror':
+            return "1/8\" mirror is not available"
+
+        # Rule 3: Mirrors cannot be tempered
+        if glass_type == 'mirror' and is_tempered:
+            return "Mirror glass cannot be tempered"
+
+        # Rule 4: Clipped corners only available for non-mirror glass
+        if num_clipped_corners > 0 and glass_type == 'mirror':
+            return "Clipped corners are not available for mirrors"
+
+        # Rule 5: Clipped corners not available for circular glass
+        if num_clipped_corners > 0 and is_circular:
+            return "Clipped corners are not available for circular glass"
+
+        return None
+
     def calculate_quote(
         self,
         width: float,
@@ -298,7 +487,9 @@ class GlassPriceCalculator:
 
         Returns:
             Dict with price breakdown:
-                - sq_ft
+                - actual_sq_ft
+                - billable_sq_ft
+                - sq_ft (billable, for backward compatibility)
                 - perimeter
                 - base_price
                 - polish_price (if applicable)
@@ -312,26 +503,54 @@ class GlassPriceCalculator:
                 - discounted_subtotal (if applicable)
                 - total (after quantity)
                 - quote_price (total ÷ 0.28)
+                - error (if validation fails)
         """
+        # Validate parameters first
+        validation_error = self.validate_quote_params(
+            thickness=thickness,
+            glass_type=glass_type,
+            is_polished=is_polished,
+            is_beveled=is_beveled,
+            is_tempered=is_tempered,
+            num_clipped_corners=num_clipped_corners,
+            is_circular=is_circular
+        )
+
+        if validation_error:
+            return {
+                'error': validation_error,
+                'actual_sq_ft': 0,
+                'billable_sq_ft': 0,
+                'sq_ft': 0,
+                'perimeter': 0,
+                'base_price': 0,
+                'total': 0,
+                'quote_price': 0
+            }
+
         # Calculate dimensions
-        sq_ft = self.calculate_square_footage(width, height, is_circular, diameter)
+        sq_ft_result = self.calculate_square_footage(width, height, is_circular, diameter)
+        actual_sq_ft = sq_ft_result['actual_sq_ft']
+        billable_sq_ft = sq_ft_result['billable_sq_ft']
         perimeter = self.calculate_perimeter(width, height, is_circular, diameter)
 
-        # Base price
-        base_price = self.calculate_base_price(thickness, glass_type, sq_ft)
+        # Base price using billable sq ft (check if enabled)
+        base_price = 0
+        if self.formula_config.get('enable_base_price', True):
+            base_price = self.calculate_base_price(thickness, glass_type, billable_sq_ft)
 
-        # Edge processing
+        # Edge processing (check if enabled)
         polish_price = 0
-        if is_polished:
+        if is_polished and self.formula_config.get('enable_polish', True):
             is_flat = (glass_type == 'mirror')
             polish_price = self.calculate_polish_price(thickness, glass_type, perimeter, is_flat)
 
         beveled_price = 0
-        if is_beveled:
+        if is_beveled and self.formula_config.get('enable_beveled', True):
             beveled_price = self.calculate_beveled_price(thickness, perimeter)
 
         clipped_corners_price = 0
-        if num_clipped_corners > 0:
+        if num_clipped_corners > 0 and self.formula_config.get('enable_clipped_corners', True):
             clipped_corners_price = self.calculate_clipped_corners_price(
                 thickness, num_clipped_corners, clip_size
             )
@@ -339,25 +558,35 @@ class GlassPriceCalculator:
         # Before markups subtotal
         before_markups = base_price + polish_price + beveled_price + clipped_corners_price
 
-        # Markups
-        tempered_price = self.calculate_tempered_markup(before_markups, glass_type, is_tempered)
-        shape_price = self.calculate_shape_markup(before_markups, is_non_rectangular, is_circular)
+        # Markups (check if enabled)
+        tempered_price = 0
+        if self.formula_config.get('enable_tempered_markup', True):
+            tempered_price = self.calculate_tempered_markup(before_markups, glass_type, is_tempered)
+
+        shape_price = 0
+        if self.formula_config.get('enable_shape_markup', True):
+            shape_price = self.calculate_shape_markup(before_markups, is_non_rectangular, is_circular)
 
         # Subtotal
         subtotal = before_markups + tempered_price + shape_price
 
-        # Contractor discount
-        contractor_discount = self.calculate_contractor_discount(subtotal, is_contractor)
+        # Contractor discount (check if enabled)
+        contractor_discount = 0
+        if self.formula_config.get('enable_contractor_discount', True):
+            contractor_discount = self.calculate_contractor_discount(subtotal, is_contractor)
+
         discounted_subtotal = subtotal - contractor_discount
 
         # Final total
         total = discounted_subtotal * quantity
 
-        # Quote price (ULTIMATE FORMULA)
-        quote_price = total / self.MARKUP_DIVISOR
+        # Quote price (Apply configured formula)
+        quote_price = self.apply_pricing_formula(total)
 
         return {
-            'sq_ft': round(sq_ft, 2),
+            'actual_sq_ft': round(actual_sq_ft, 2),
+            'billable_sq_ft': round(billable_sq_ft, 2),
+            'sq_ft': round(billable_sq_ft, 2),  # Backward compatibility
             'perimeter': round(perimeter, 2),
             'base_price': round(base_price, 2),
             'polish_price': round(polish_price, 2) if polish_price > 0 else None,

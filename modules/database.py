@@ -19,7 +19,8 @@ class Database:
             access_token: Optional JWT access token for authenticated requests (enables RLS)
         """
         self.url = os.getenv("SUPABASE_URL")
-        self.key = os.getenv("SUPABASE_KEY")
+        # Try to use service role key first (bypasses RLS), fallback to anon key
+        self.key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
 
         if not self.url or not self.key:
             raise ValueError(
@@ -464,6 +465,21 @@ class Database:
             print(f"Error fetching clipped corners pricing: {e}")
             return {}
 
+    def get_calculator_settings(self) -> Dict:
+        """Get calculator system settings (constants)"""
+        try:
+            response = self.client.table("calculator_settings").select("*").execute()
+            return {row['setting_key']: float(row['setting_value']) for row in response.data}
+        except Exception as e:
+            print(f"Error fetching calculator settings: {e}")
+            # Return defaults if table doesn't exist yet
+            return {
+                'minimum_sq_ft': 3.0,
+                'markup_divisor': 0.28,
+                'contractor_discount_rate': 0.15,
+                'flat_polish_rate': 0.27
+            }
+
     def get_calculator_config(self) -> Dict:
         """Get complete calculator configuration for pricing"""
         try:
@@ -472,6 +488,8 @@ class Database:
             markups = self.get_markups()
             beveled = self.get_beveled_pricing()
             clipped = self.get_clipped_corners_pricing()
+            settings = self.get_calculator_settings()
+            formula_config = self.get_pricing_formula_config()
 
             # Transform glass_config to dict
             glass_config = {}
@@ -489,7 +507,9 @@ class Database:
                 'glass_config': glass_config,
                 'markups': markups,
                 'beveled_pricing': beveled,
-                'clipped_corners_pricing': clipped
+                'clipped_corners_pricing': clipped,
+                'settings': settings,
+                'formula_config': formula_config
             }
         except Exception as e:
             print(f"Error fetching calculator config: {e}")
@@ -497,8 +517,225 @@ class Database:
                 'glass_config': {},
                 'markups': {},
                 'beveled_pricing': {},
-                'clipped_corners_pricing': {}
+                'clipped_corners_pricing': {},
+                'settings': {
+                    'minimum_sq_ft': 3.0,
+                    'markup_divisor': 0.28,
+                    'contractor_discount_rate': 0.15,
+                    'flat_polish_rate': 0.27
+                },
+                'formula_config': {
+                    'formula_mode': 'divisor',
+                    'divisor_value': 0.28,
+                    'multiplier_value': 3.5714,
+                    'custom_expression': None,
+                    'enable_base_price': True,
+                    'enable_polish': True,
+                    'enable_beveled': True,
+                    'enable_clipped_corners': True,
+                    'enable_tempered_markup': True,
+                    'enable_shape_markup': True,
+                    'enable_contractor_discount': True
+                }
             }
+
+    # ========== Calculator Settings Update Methods ==========
+
+    def update_calculator_setting(self, setting_key: str, setting_value: float, user_id: str) -> bool:
+        """Update a calculator system setting"""
+        try:
+            response = self.client.table("calculator_settings").update({
+                "setting_value": setting_value,
+                "updated_by": user_id
+            }).eq("setting_key", setting_key).execute()
+            return len(response.data) > 0
+        except Exception as e:
+            print(f"Error updating calculator setting {setting_key}: {e}")
+            return False
+
+    def update_glass_config(self, id: int, base_price: float, polish_price: float, user_id: str) -> bool:
+        """Update glass configuration pricing"""
+        try:
+            response = self.client.table("glass_config").update({
+                "base_price": base_price,
+                "polish_price": polish_price,
+                "updated_by": user_id
+            }).eq("id", id).execute()
+            return len(response.data) > 0
+        except Exception as e:
+            print(f"Error updating glass config {id}: {e}")
+            return False
+
+    def update_markup(self, name: str, percentage: float, user_id: str) -> bool:
+        """Update markup percentage"""
+        try:
+            response = self.client.table("markups").update({
+                "percentage": percentage,
+                "updated_by": user_id
+            }).eq("name", name).execute()
+            return len(response.data) > 0
+        except Exception as e:
+            print(f"Error updating markup {name}: {e}")
+            return False
+
+    def update_beveled_pricing(self, id: int, price_per_inch: float, user_id: str) -> bool:
+        """Update beveled edge pricing"""
+        try:
+            response = self.client.table("beveled_pricing").update({
+                "price_per_inch": price_per_inch,
+                "updated_by": user_id
+            }).eq("id", id).execute()
+            return len(response.data) > 0
+        except Exception as e:
+            print(f"Error updating beveled pricing {id}: {e}")
+            return False
+
+    def update_clipped_corners_pricing(self, id: int, price_per_corner: float, user_id: str) -> bool:
+        """Update clipped corners pricing"""
+        try:
+            response = self.client.table("clipped_corners_pricing").update({
+                "price_per_corner": price_per_corner,
+                "updated_by": user_id
+            }).eq("id", id).execute()
+            return len(response.data) > 0
+        except Exception as e:
+            print(f"Error updating clipped corners pricing {id}: {e}")
+            return False
+
+    # ========== Pricing Formula Config Methods ==========
+
+    def get_pricing_formula_config(self) -> Dict:
+        """Get active pricing formula configuration"""
+        try:
+            response = self.client.table("pricing_formula_config")\
+                .select("*")\
+                .eq("is_active", True)\
+                .limit(1)\
+                .execute()
+
+            if response.data:
+                config = response.data[0]
+                return {
+                    'id': config['id'],
+                    'formula_mode': config['formula_mode'],
+                    'divisor_value': float(config['divisor_value']),
+                    'multiplier_value': float(config['multiplier_value']),
+                    'custom_expression': config.get('custom_expression'),
+                    'enable_base_price': config['enable_base_price'],
+                    'enable_polish': config['enable_polish'],
+                    'enable_beveled': config['enable_beveled'],
+                    'enable_clipped_corners': config['enable_clipped_corners'],
+                    'enable_tempered_markup': config['enable_tempered_markup'],
+                    'enable_shape_markup': config['enable_shape_markup'],
+                    'enable_contractor_discount': config['enable_contractor_discount'],
+                    'description': config.get('description', '')
+                }
+            else:
+                # Return default config if none exists
+                return {
+                    'id': None,
+                    'formula_mode': 'divisor',
+                    'divisor_value': 0.28,
+                    'multiplier_value': 3.5714,
+                    'custom_expression': None,
+                    'enable_base_price': True,
+                    'enable_polish': True,
+                    'enable_beveled': True,
+                    'enable_clipped_corners': True,
+                    'enable_tempered_markup': True,
+                    'enable_shape_markup': True,
+                    'enable_contractor_discount': True,
+                    'description': 'Default formula configuration'
+                }
+        except Exception as e:
+            print(f"Error fetching pricing formula config: {e}")
+            # Return default
+            return {
+                'id': None,
+                'formula_mode': 'divisor',
+                'divisor_value': 0.28,
+                'multiplier_value': 3.5714,
+                'custom_expression': None,
+                'enable_base_price': True,
+                'enable_polish': True,
+                'enable_beveled': True,
+                'enable_clipped_corners': True,
+                'enable_tempered_markup': True,
+                'enable_shape_markup': True,
+                'enable_contractor_discount': True,
+                'description': 'Default formula configuration'
+            }
+
+    def update_pricing_formula_config(
+        self,
+        formula_mode: str,
+        divisor_value: float,
+        multiplier_value: float,
+        custom_expression: Optional[str],
+        enable_base_price: bool,
+        enable_polish: bool,
+        enable_beveled: bool,
+        enable_clipped_corners: bool,
+        enable_tempered_markup: bool,
+        enable_shape_markup: bool,
+        enable_contractor_discount: bool,
+        user_id: str
+    ) -> bool:
+        """Update pricing formula configuration"""
+        try:
+            # Get current active config
+            current = self.client.table("pricing_formula_config")\
+                .select("id")\
+                .eq("is_active", True)\
+                .limit(1)\
+                .execute()
+
+            update_data = {
+                "formula_mode": formula_mode,
+                "divisor_value": divisor_value,
+                "multiplier_value": multiplier_value,
+                "custom_expression": custom_expression,
+                "enable_base_price": enable_base_price,
+                "enable_polish": enable_polish,
+                "enable_beveled": enable_beveled,
+                "enable_clipped_corners": enable_clipped_corners,
+                "enable_tempered_markup": enable_tempered_markup,
+                "enable_shape_markup": enable_shape_markup,
+                "enable_contractor_discount": enable_contractor_discount,
+                "updated_by": user_id
+            }
+
+            if current.data:
+                # Update existing config
+                config_id = current.data[0]['id']
+                response = self.client.table("pricing_formula_config")\
+                    .update(update_data)\
+                    .eq("id", config_id)\
+                    .execute()
+                return len(response.data) > 0
+            else:
+                # Insert new config
+                update_data['is_active'] = True
+                response = self.client.table("pricing_formula_config")\
+                    .insert(update_data)\
+                    .execute()
+                return len(response.data) > 0
+        except Exception as e:
+            print(f"Error updating pricing formula config: {e}")
+            return False
+
+    def get_formula_audit_log(self, limit: int = 50) -> List[Dict]:
+        """Get pricing formula change audit log"""
+        try:
+            response = self.client.table("pricing_formula_audit")\
+                .select("*, auth.users(email)")\
+                .order("changed_at", desc=True)\
+                .limit(limit)\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching formula audit log: {e}")
+            return []
 
     # ========== PO Tracker Methods ==========
 
@@ -550,26 +787,29 @@ class Database:
             print(f"Error searching PO clients: {e}")
             return []
 
-    def insert_po_client(self, client_data: Dict, user_id: str) -> Optional[Dict]:
+    def insert_po_client(self, client_data: Dict, user_id: str = None) -> Optional[Dict]:
         """Insert a new PO client with company scoping and audit trail
 
         Args:
             client_data: Client information dictionary
-            user_id: UUID of the user creating the client
+            user_id: UUID of the user creating the client (optional - if None, will use service role)
 
         Returns:
             Created client record or None on error
         """
         try:
-            # Get user's company_id
-            company_id = self.get_user_company_id(user_id)
-            if not company_id:
-                print(f"Error: Could not find company_id for user {user_id}")
-                return None
-
-            # Add company scoping and audit trail
-            client_data['company_id'] = company_id
-            client_data['created_by'] = user_id
+            # Get user's company_id if user_id provided
+            if user_id:
+                company_id = self.get_user_company_id(user_id)
+                if not company_id:
+                    print(f"Error: Could not find company_id for user {user_id}")
+                    return None
+                # Add company scoping and audit trail
+                client_data['company_id'] = company_id
+                client_data['created_by'] = user_id
+            else:
+                # No user_id - will insert without company scoping (may fail with RLS)
+                print("WARNING: Inserting client without user_id/company_id - audit trail incomplete")
 
             response = self.client.table("po_clients").insert(client_data).execute()
             return response.data[0] if response.data else None
@@ -643,25 +883,140 @@ class Database:
 
     def get_purchase_orders_by_client(self, client_id: int) -> List[Dict]:
         """Get all purchase orders for a client"""
+        import sys
         try:
             response = self.client.table("po_purchase_orders")\
                 .select("*")\
                 .eq("client_id", client_id)\
                 .order("created_at", desc=True)\
                 .execute()
+
+            # DIAGNOSTIC: Print actual column names from first PO
+            if response.data and len(response.data) > 0:
+                print(f"[SCHEMA DEBUG] Actual PO columns: {list(response.data[0].keys())}", file=sys.stderr, flush=True)
+
             return response.data
         except Exception as e:
             print(f"Error fetching POs for client {client_id}: {e}")
             return []
 
-    def insert_purchase_order(self, po_data: Dict) -> Optional[Dict]:
-        """Insert a new purchase order"""
+    def insert_purchase_order(self, po_data: Dict, user_id: str) -> Optional[Dict]:
+        """Insert a new purchase order with company scoping and audit trail
+
+        Args:
+            po_data: Purchase order data dictionary
+            user_id: UUID of the user creating the PO
+
+        Returns:
+            Created PO record or None on error
+        """
+        import sys
         try:
+            print(f"[DB] insert_purchase_order called with user_id={user_id}", file=sys.stderr, flush=True)
+            # Get user's company_id
+            company_id = self.get_user_company_id(user_id)
+            print(f"[DB] Got company_id={company_id}", file=sys.stderr, flush=True)
+            if not company_id:
+                print(f"[DB] Error: Could not find company_id for user {user_id}", file=sys.stderr, flush=True)
+                return None
+
+            # Add company scoping and audit trail
+            po_data['company_id'] = company_id
+            po_data['created_by'] = user_id
+            print(f"[DB] Inserting PO data: {po_data}", file=sys.stderr, flush=True)
+
             response = self.client.table("po_purchase_orders").insert(po_data).execute()
+            print(f"[DB] Insert response: {response}", file=sys.stderr, flush=True)
+            result = response.data[0] if response.data else None
+            print(f"[DB] Returning result: {result}", file=sys.stderr, flush=True)
+            return result
+        except Exception as e:
+            import traceback
+            print(f"[DB] Error inserting purchase order: {e}", file=sys.stderr, flush=True)
+            print(f"[DB] Traceback: {traceback.format_exc()}", file=sys.stderr, flush=True)
+            return None
+
+    def update_purchase_order(self, po_id: int, po_data: Dict, user_id: str) -> bool:
+        """Update an existing purchase order with audit trail
+
+        Args:
+            po_id: ID of the purchase order to update
+            po_data: Dictionary of fields to update
+            user_id: UUID of the user making the update
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Add audit trail
+            po_data['updated_by'] = user_id
+            po_data['updated_at'] = 'NOW()'
+
+            self.client.table("po_purchase_orders").update(po_data).eq("id", po_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error updating purchase order {po_id}: {e}")
+            return False
+
+    def delete_purchase_order(self, po_id: int, user_id: str) -> bool:
+        """Soft delete a purchase order
+
+        Args:
+            po_id: ID of the purchase order to delete
+            user_id: UUID of the user deleting the PO
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Soft delete: set deleted flag to True
+            updates = {
+                'deleted': True,
+                'updated_by': user_id,
+                'updated_at': 'NOW()'
+            }
+            self.client.table("po_purchase_orders").update(updates).eq("id", po_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error deleting purchase order {po_id}: {e}")
+            return False
+
+    def get_purchase_order_by_id(self, po_id: int) -> Optional[Dict]:
+        """Get a single purchase order by ID
+
+        Args:
+            po_id: ID of the purchase order
+
+        Returns:
+            Purchase order record or None if not found
+        """
+        try:
+            response = self.client.table("po_purchase_orders")\
+                .select("*")\
+                .eq("id", po_id)\
+                .eq("deleted", False)\
+                .execute()
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"Error inserting purchase order: {e}")
+            print(f"Error fetching purchase order {po_id}: {e}")
             return None
+
+    def get_all_purchase_orders(self) -> List[Dict]:
+        """Get all purchase orders (excludes deleted)
+
+        Returns:
+            List of all purchase orders with client info
+        """
+        try:
+            response = self.client.table("po_purchase_orders")\
+                .select("*, po_clients(client_name, client_type)")\
+                .eq("deleted", False)\
+                .order("created_at", desc=True)\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching all purchase orders: {e}")
+            return []
 
     def get_po_activities(self, client_id: int = None, po_id: int = None) -> List[Dict]:
         """Get activity log for client or PO"""
@@ -720,26 +1075,28 @@ class Database:
             print(f"Error fetching primary contact for client {client_id}: {e}")
             return None
 
-    def insert_client_contact(self, contact_data: Dict, user_id: str) -> Optional[Dict]:
+    def insert_client_contact(self, contact_data: Dict, user_id: str = None) -> Optional[Dict]:
         """Insert a new client contact with company scoping and audit trail
 
         Args:
             contact_data: Contact information dictionary
-            user_id: UUID of the user creating the contact
+            user_id: UUID of the user creating the contact (optional)
 
         Returns:
             Created contact record or None on error
         """
         try:
-            # Get user's company_id
-            company_id = self.get_user_company_id(user_id)
-            if not company_id:
-                print(f"Error: Could not find company_id for user {user_id}")
-                return None
-
-            # Add company scoping and audit trail
-            contact_data['company_id'] = company_id
-            contact_data['created_by'] = user_id
+            # Get user's company_id if user_id provided
+            if user_id:
+                company_id = self.get_user_company_id(user_id)
+                if not company_id:
+                    print(f"Error: Could not find company_id for user {user_id}")
+                    return None
+                # Add company scoping and audit trail
+                contact_data['company_id'] = company_id
+                contact_data['created_by'] = user_id
+            else:
+                print("WARNING: Inserting contact without user_id/company_id - audit trail incomplete")
 
             response = self.client.table("po_client_contacts").insert(contact_data).execute()
             return response.data[0] if response.data else None
@@ -1295,6 +1652,343 @@ class Database:
             return [row['po_number'] for row in response.data]
         except Exception as e:
             print(f"Error searching PO numbers: {e}")
+            return []
+
+    # ========== Jobs/PO System Methods ==========
+
+    def get_all_vendors(self) -> List[Dict]:
+        """Get all vendors"""
+        try:
+            response = self.client.table("vendors")\
+                .select("*")\
+                .order("vendor_name")\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching vendors: {e}")
+            return []
+
+    def get_vendor_by_id(self, vendor_id: int) -> Optional[Dict]:
+        """Get a single vendor by ID"""
+        try:
+            response = self.client.table("vendors")\
+                .select("*")\
+                .eq("vendor_id", vendor_id)\
+                .execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error fetching vendor: {e}")
+            return None
+
+    def insert_vendor(self, vendor_data: Dict, user_id: str) -> Optional[Dict]:
+        """Insert a new vendor"""
+        try:
+            company_id = self.get_user_company_id(user_id)
+            if not company_id:
+                return None
+
+            vendor_data['company_id'] = company_id
+            vendor_data['created_by'] = user_id
+
+            response = self.client.table("vendors").insert(vendor_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error inserting vendor: {e}")
+            return None
+
+    def update_vendor(self, vendor_id: int, updates: Dict, user_id: str) -> bool:
+        """Update vendor"""
+        try:
+            updates['updated_by'] = user_id
+            updates['updated_at'] = 'NOW()'
+            self.client.table("vendors").update(updates).eq("vendor_id", vendor_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error updating vendor: {e}")
+            return False
+
+    def delete_vendor(self, vendor_id: int) -> bool:
+        """Delete vendor"""
+        try:
+            self.client.table("vendors").delete().eq("vendor_id", vendor_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error deleting vendor: {e}")
+            return False
+
+    def get_all_material_templates(self) -> List[Dict]:
+        """Get all material templates"""
+        try:
+            response = self.client.table("material_templates")\
+                .select("*")\
+                .eq("is_active", True)\
+                .order("sort_order")\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching material templates: {e}")
+            return []
+
+    def insert_material_template(self, template_data: Dict, user_id: str) -> Optional[Dict]:
+        """Insert a new material template"""
+        try:
+            company_id = self.get_user_company_id(user_id)
+            if not company_id:
+                return None
+
+            template_data['company_id'] = company_id
+            template_data['created_by'] = user_id
+
+            response = self.client.table("material_templates").insert(template_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error inserting material template: {e}")
+            return None
+
+    def get_all_jobs(self, company_id: str, status: Optional[str] = None) -> List[Dict]:
+        """Get all jobs with client info"""
+        try:
+            query = self.client.table("jobs")\
+                .select("*, po_clients(client_name, client_type)")\
+                .eq("company_id", company_id)\
+                .is_("deleted_at", "null")\
+                .order("job_date", desc=True)
+
+            if status:
+                query = query.eq("status", status)
+
+            response = query.execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching jobs: {e}")
+            return []
+
+    def get_job_by_id(self, job_id: int) -> Optional[Dict]:
+        """Get a single job with all details"""
+        try:
+            response = self.client.table("jobs")\
+                .select("*, po_clients(*)")\
+                .eq("job_id", job_id)\
+                .is_("deleted_at", "null")\
+                .execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error fetching job: {e}")
+            return None
+
+    def insert_job(self, job_data: Dict, user_id: str) -> Optional[Dict]:
+        """Insert a new job"""
+        try:
+            company_id = self.get_user_company_id(user_id)
+            if not company_id:
+                return None
+
+            job_data['company_id'] = company_id
+            job_data['created_by'] = user_id
+
+            response = self.client.table("jobs").insert(job_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error inserting job: {e}")
+            return None
+
+    def update_job(self, job_id: int, updates: Dict, user_id: str) -> bool:
+        """Update job"""
+        try:
+            updates['updated_by'] = user_id
+            updates['updated_at'] = 'NOW()'
+            self.client.table("jobs").update(updates).eq("job_id", job_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error updating job: {e}")
+            return False
+
+    def get_job_work_items(self, job_id: int) -> List[Dict]:
+        """Get all work items for a job"""
+        try:
+            response = self.client.table("job_work_items")\
+                .select("*")\
+                .eq("job_id", job_id)\
+                .order("sort_order")\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching work items: {e}")
+            return []
+
+    def insert_work_item(self, item_data: Dict, user_id: str) -> Optional[Dict]:
+        """Insert a new work item"""
+        try:
+            company_id = self.get_user_company_id(user_id)
+            if not company_id:
+                return None
+
+            item_data['company_id'] = company_id
+            item_data['created_by'] = user_id
+
+            response = self.client.table("job_work_items").insert(item_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error inserting work item: {e}")
+            return None
+
+    def get_job_vendor_materials(self, job_id: int) -> List[Dict]:
+        """Get all vendor materials for a job"""
+        try:
+            response = self.client.table("job_vendor_materials")\
+                .select("*, vendors(vendor_name)")\
+                .eq("job_id", job_id)\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching vendor materials: {e}")
+            return []
+
+    def insert_vendor_material(self, material_data: Dict, user_id: str) -> Optional[Dict]:
+        """Insert a new vendor material"""
+        try:
+            company_id = self.get_user_company_id(user_id)
+            if not company_id:
+                return None
+
+            material_data['company_id'] = company_id
+            material_data['created_by'] = user_id
+
+            response = self.client.table("job_vendor_materials").insert(material_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error inserting vendor material: {e}")
+            return None
+
+    def get_job_site_visits(self, job_id: int) -> List[Dict]:
+        """Get all site visits for a job"""
+        try:
+            response = self.client.table("job_site_visits")\
+                .select("*")\
+                .eq("job_id", job_id)\
+                .order("visit_date", desc=True)\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching site visits: {e}")
+            return []
+
+    def insert_site_visit(self, visit_data: Dict, user_id: str) -> Optional[Dict]:
+        """Insert a new site visit"""
+        try:
+            company_id = self.get_user_company_id(user_id)
+            if not company_id:
+                return None
+
+            visit_data['company_id'] = company_id
+            visit_data['created_by'] = user_id
+
+            response = self.client.table("job_site_visits").insert(visit_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error inserting site visit: {e}")
+            return None
+
+    def get_job_files(self, job_id: int) -> List[Dict]:
+        """Get all files for a job"""
+        try:
+            response = self.client.table("job_files")\
+                .select("*")\
+                .eq("job_id", job_id)\
+                .order("uploaded_at", desc=True)\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching job files: {e}")
+            return []
+
+    def insert_job_file(self, file_data: Dict, user_id: str) -> Optional[Dict]:
+        """Insert a new job file"""
+        try:
+            company_id = self.get_user_company_id(user_id)
+            if not company_id:
+                return None
+
+            file_data['company_id'] = company_id
+            file_data['uploaded_by'] = user_id
+
+            response = self.client.table("job_files").insert(file_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error inserting job file: {e}")
+            return None
+
+    def get_job_comments(self, job_id: int) -> List[Dict]:
+        """Get all comments for a job"""
+        try:
+            response = self.client.table("job_comments")\
+                .select("*")\
+                .eq("job_id", job_id)\
+                .order("created_at", desc=False)\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching job comments: {e}")
+            return []
+
+    def insert_job_comment(self, comment_data: Dict, user_id: str, user_name: str) -> Optional[Dict]:
+        """Insert a new job comment"""
+        try:
+            company_id = self.get_user_company_id(user_id)
+            if not company_id:
+                return None
+
+            comment_data['company_id'] = company_id
+            comment_data['user_id'] = user_id
+            comment_data['user_name'] = user_name
+
+            response = self.client.table("job_comments").insert(comment_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error inserting job comment: {e}")
+            return None
+
+    def get_job_schedule(self, job_id: int) -> List[Dict]:
+        """Get all scheduled events for a job"""
+        try:
+            response = self.client.table("job_schedule")\
+                .select("*")\
+                .eq("job_id", job_id)\
+                .order("scheduled_date")\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching job schedule: {e}")
+            return []
+
+    def insert_schedule_event(self, event_data: Dict, user_id: str) -> Optional[Dict]:
+        """Insert a new schedule event"""
+        try:
+            company_id = self.get_user_company_id(user_id)
+            if not company_id:
+                return None
+
+            event_data['company_id'] = company_id
+            event_data['created_by'] = user_id
+
+            response = self.client.table("job_schedule").insert(event_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error inserting schedule event: {e}")
+            return None
+
+    def get_jobs_by_client(self, client_id: int) -> List[Dict]:
+        """Get all jobs for a specific client"""
+        try:
+            response = self.client.table("jobs")\
+                .select("*")\
+                .eq("client_id", client_id)\
+                .is_("deleted_at", "null")\
+                .order("job_date", desc=True)\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching jobs by client: {e}")
             return []
 
 

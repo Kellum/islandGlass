@@ -1,0 +1,15 @@
+{
+  "existing_tables": [
+    "jobs",
+    "po_clients",
+    "vendors",
+    "calculator_settings",
+    "pricing_formula_config",
+    "glass_config"
+  ],
+  "missing_tables": [
+    "purchase_orders",
+    "locations"
+  ],
+  "total_checked": 8
+}

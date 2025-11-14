@@ -92,7 +92,7 @@ def create_user_display(user_data):
                 ], gap=0)
             ], gap="xs")
         ], gap="xs")
-    ], p="sm", withBorder=True, radius="md", style={"marginTop": "10px"})
+    ], p="xs", withBorder=True, radius="sm")
 
 
 def create_unauthenticated_message():
@@ -223,3 +223,70 @@ def is_owner(session_data):
     if not user:
         return False
     return user.get('role') == 'owner'
+
+
+def create_session_status_indicator():
+    """
+    Create a session status indicator that shows:
+    - When the session will expire
+    - When the last token refresh happened
+    - Session health status
+
+    Returns:
+        DMC component with session status display
+    """
+    return html.Div([
+        # Container for session status (populated by callback)
+        html.Div(id='session-status-display'),
+
+        # Hidden div for notification messages
+        html.Div(id='session-notification', style={'display': 'none'})
+    ])
+
+
+def create_session_badge(status='active', time_remaining=None):
+    """
+    Create a visual badge showing session status
+
+    Args:
+        status: 'active', 'refreshing', 'warning', or 'expired'
+        time_remaining: Minutes remaining until expiry (optional)
+
+    Returns:
+        DMC Badge component
+    """
+    status_config = {
+        'active': {
+            'color': 'green',
+            'icon': 'solar:shield-check-bold',
+            'label': 'Session Active'
+        },
+        'refreshing': {
+            'color': 'blue',
+            'icon': 'solar:refresh-circle-bold',
+            'label': 'Refreshing...'
+        },
+        'warning': {
+            'color': 'orange',
+            'icon': 'solar:danger-triangle-bold',
+            'label': 'Expiring Soon'
+        },
+        'expired': {
+            'color': 'red',
+            'icon': 'solar:close-circle-bold',
+            'label': 'Session Expired'
+        }
+    }
+
+    config = status_config.get(status, status_config['active'])
+
+    label = config['label']
+    if time_remaining and status == 'active':
+        label = f"Active ({time_remaining} min left)"
+    elif time_remaining and status == 'warning':
+        label = f"Expiring in {time_remaining} min"
+
+    return dmc.Group([
+        DashIconify(icon=config['icon'], width=16),
+        dmc.Text(label, size="xs", fw=500)
+    ], gap="xs")

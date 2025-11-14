@@ -44,57 +44,76 @@ A comprehensive CRM system for glass contractors featuring lead generation, clie
 
 ---
 
+## 📚 Documentation for Developers
+
+**NEW DEVELOPERS - START HERE:**
+
+1. **[QUICK_START.md](QUICK_START.md)** ⭐ - **Get running in 5 minutes! (READ FIRST!)**
+2. **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - **Complete tech stack & architecture guide**
+3. **[checkpoint.md](checkpoint.md)** - Current project status and recent changes
+
+**Additional Resources:**
+
+- **[ARCHITECTURE_RULES.md](ARCHITECTURE_RULES.md)** - Code patterns and best practices
+- **[docs/README.md](docs/README.md)** - Complete documentation index
+- **[backend/README.md](backend/README.md)** - Backend API reference
+
+### Quick Links by Task
+
+| Task | Document |
+|------|----------|
+| **Writing new code** | [ARCHITECTURE_RULES.md](ARCHITECTURE_RULES.md) |
+| **Debugging an issue** | [docs/TROUBLESHOOTING_LOG.md](docs/TROUBLESHOOTING_LOG.md) |
+| **Learning patterns** | [docs/LESSONS_LEARNED.md](docs/LESSONS_LEARNED.md) |
+| **Daily commands** | [QUICK_REFERENCE.md](QUICK_REFERENCE.md) |
+| **Understanding Jobs/PO** | [docs/REVISED_PO_SYSTEM_SUMMARY.md](docs/REVISED_PO_SYSTEM_SUMMARY.md) |
+
+---
+
 ## Quick Start
 
+**⚡ Get started in 5 minutes - see [QUICK_START.md](QUICK_START.md)**
+
 ### Prerequisites
-- Python 3.9 or higher
+- Node.js 18+
+- Python 3.9+
 - Supabase account
-- API Keys: Anthropic, Google Places (optional)
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
    git clone https://github.com/Kellum/islandGlass.git
-   cd islandGlass
+   cd islandGlassLeads
    ```
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure environment**
+2. **Configure environment**
    ```bash
    cp .env.example .env
+   # Edit .env with your Supabase credentials
    ```
 
-   Edit `.env` with your credentials:
-   ```
-   ANTHROPIC_API_KEY=sk-ant-your-key-here
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_KEY=your-anon-key-here
-   GOOGLE_PLACES_API_KEY=your-google-key-here
-   ```
-
-4. **Set up database**
-
-   Run migrations in your Supabase SQL Editor (in order):
-   - `database/migrations/001_initial_schema.sql`
-   - `database/migrations/002_user_roles_departments.sql`
-   - `database/migrations/003_window_manufacturing.sql`
-   - `database/migrations/004_window_seed_data.sql`
-
-   See [database/README.md](database/README.md) for detailed instructions.
-
-5. **Run the application**
+3. **Start Frontend** (Terminal 1)
    ```bash
-   python3 dash_app.py
+   cd frontend
+   npm install
+   npm run dev
+   # → http://localhost:5173
    ```
 
-6. **Open in browser**
+4. **Start Backend** (Terminal 2)
+   ```bash
+   cd backend
+   python3 -m uvicorn main:app --reload --port 8000
+   # → http://localhost:8000
+   # API docs → http://localhost:8000/docs
+   ```
 
-   Navigate to http://localhost:8050
+5. **Open in browser**
+
+   Navigate to http://localhost:5173 and log in with your Supabase credentials
+
+**For complete setup instructions, see [QUICK_START.md](QUICK_START.md)**
 
 ---
 
@@ -146,16 +165,33 @@ islandGlass/
 
 ## Tech Stack
 
+### Frontend
 | Component | Technology |
 |-----------|-----------|
-| Framework | Dash (Plotly) |
-| UI Library | Dash Mantine Components |
+| Framework | React 19 + TypeScript |
+| Build Tool | Vite |
+| Styling | Tailwind CSS v3 |
+| State Management | React Query |
+| Routing | React Router v6 |
+| HTTP Client | Axios |
+
+### Backend
+| Component | Technology |
+|-----------|-----------|
+| Framework | FastAPI (Python 3.9+) |
 | Database | Supabase (PostgreSQL) |
+| Authentication | JWT Tokens |
+| Validation | Pydantic |
+| API Docs | Swagger UI (auto-generated) |
+
+### Infrastructure
+| Component | Technology |
+|-----------|-----------|
+| Database | PostgreSQL (via Supabase) |
 | Security | Row-Level Security (RLS) |
-| AI/ML | Anthropic Claude |
-| APIs | Google Places, Zebra ZPL |
-| Language | Python 3.9+ |
-| Deployment | Railway (optional) |
+| Hosting | Supabase (database), TBD (app) |
+
+**For detailed tech stack explanation, see [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)**
 
 ---
 
@@ -225,23 +261,39 @@ git push origin feature/my-feature
 
 ### Current Status
 
-**Phase**: Window Manufacturing System (70% complete)
+**Phase**: Full-Stack React/FastAPI Application - Session 44 Complete ✅
 
-**Completed:**
-- ✅ Contractor lead generation
-- ✅ AI enrichment & outreach
-- ✅ PO client management
-- ✅ Window order entry
-- ✅ Glass calculator
-- ✅ Label generation (ZPL)
-- ✅ Authentication & RLS
+**Frontend Features Complete:**
+- ✅ React 19 + TypeScript + Tailwind CSS
+- ✅ Authentication (Login/Logout with JWT)
+- ✅ Dashboard with metrics
+- ✅ Jobs list and detail pages
+- ✅ Clients management
+- ✅ Vendors management
+- ✅ Schedule/Calendar view
+- ✅ **Glass Price Calculator** (NEW! - Session 44)
+- ✅ Responsive navigation with sidebar
 
-**In Progress:**
-- ⏳ Window Order Management page
-- ⏳ Label Printing page
-- ⏳ Navigation integration
+**Backend API Complete:**
+- ✅ 11 Production-Ready APIs (127 tests passing)
+- ✅ FastAPI with auto-generated docs
+- ✅ JWT authentication
+- ✅ Full CRUD for all entities
+- ✅ **Calculator config endpoint** (NEW! - Session 44)
 
-See [docs/sessions/SESSION_13_START_HERE.md](docs/sessions/SESSION_13_START_HERE.md) for current session details.
+**Documentation Complete:**
+- ✅ **DEVELOPER_GUIDE.md** - Complete tech stack guide (NEW!)
+- ✅ **QUICK_START.md** - 5-minute setup guide (NEW!)
+- ✅ Backend README with API documentation
+- ✅ Checkpoint tracking all sessions
+
+**Next Steps:**
+- ⏳ Create/Edit modals for all entities
+- ⏳ File upload functionality
+- ⏳ Enhanced job detail page with tabs
+- ⏳ Production deployment
+
+See [checkpoint.md](checkpoint.md) for latest session details.
 
 ---
 
@@ -345,6 +397,6 @@ Built with:
 
 ---
 
-**Current Version**: 0.7.0 (Window Manufacturing System in progress)
+**Current Version**: 0.95.0 (Window Manufacturing System - Ready for Testing)
 
-**Last Updated**: November 2024
+**Last Updated**: November 4, 2024

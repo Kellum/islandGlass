@@ -30,7 +30,7 @@ SELECT
     TRUE as is_active,
     TRUE as is_default,
     c.id as company_id,
-    c.owner_id as created_by  -- Use company owner as creator
+    NULL as created_by  -- Optional field, set to NULL for seed data
 FROM companies c
 WHERE NOT EXISTS (
     -- Don't create if one already exists for this company

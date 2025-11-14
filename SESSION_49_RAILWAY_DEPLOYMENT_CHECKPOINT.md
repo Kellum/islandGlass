@@ -10,7 +10,7 @@
 We are **extremely close** to successfully deploying the Island Glass CRM to Railway. The app is built, configured, and environment variables are set. We're just debugging final deployment issues.
 
 ### Latest Commit
-- **Commit**: `9694e88` - "Force Node 20+ for Railway deployment"
+- **Commit**: `4baa36d` - "Fix Railway npm ci: include devDependencies during build"
 - **Branch**: `main`
 - **Pushed to**: https://github.com/Kellum/islandGlass.git
 
@@ -48,28 +48,18 @@ We are **extremely close** to successfully deploying the Island Glass CRM to Rai
 
 ---
 
-## Current Issue
+## Current Issue - FIXED ✅
 
-**Problem**: Railway is still using Node 18 instead of Node 20, causing:
-- `patch-package: not found` error during npm install
-- Engine compatibility warnings for vite, react-router, etc.
+**Previous Problem**: Railway was using Node 18 causing `patch-package: not found` error
 
-**Latest Error Log**:
-```
-npm warn EBADENGINE Unsupported engine { node: 'v18.20.5' }
-npm error sh: 1: patch-package: not found
-ERROR: failed to build: exit code: 127
-```
+**Fixed in commit 4baa36d**:
+1. ✅ Added `NIXPACKS_NODE_VERSION=20` environment variable in Railway
+   - Forces Railway to use Node 20.x instead of detecting Node 18
+2. ✅ Changed `npm ci` to `npm ci --include=dev` in `railway.json`
+   - Ensures devDependencies are installed during build
+   - Fixes `patch-package: not found` error from rollup's postinstall script
 
-**What Railway is detecting**:
-```
-setup      │ nodejs_18, npm-9_x
-```
-
-**What we need**:
-```
-setup      │ nodejs_20, npm-10_x
-```
+**Current Status**: Deployment in progress, waiting for Railway build to complete
 
 ---
 
@@ -180,19 +170,17 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbG... (service role key)
 ## Quick Start Prompt for Next Session
 
 ```
-Continue Railway deployment for Island Glass CRM. Latest commit: 9694e88.
+Continue Railway deployment for Island Glass CRM. Latest commit: 4baa36d.
 
-Current issue: Railway still using Node 18 instead of Node 20, causing
-"patch-package not found" error. We've tried:
-- Added .nvmrc with "20"
-- Added engines field to package.json
-- Removed conflicting nixpacks.toml and railway.toml
+Status: Fixed patch-package error by:
+1. Adding NIXPACKS_NODE_VERSION=20 environment variable in Railway
+2. Changed npm ci to "npm ci --include=dev" in railway.json
 
-Next: Try adding NIXPACKS_NODE_VERSION=20 as Railway environment variable,
-or create new nixpacks.toml with nodejs-20_x explicitly.
+Railway deployment should now be building successfully. Check deployment logs
+to see if there are any new issues. If successful, test the deployed app.
 
-Railway project is connected to GitHub, environment variables are set
-(JWT_SECRET, SUPABASE_*). Just need to fix Node version detection.
+Railway project is connected to GitHub, all environment variables are set
+(JWT_SECRET, SUPABASE_*). Ready to verify successful deployment!
 ```
 
 ---
@@ -243,4 +231,4 @@ git log --oneline -5
 
 ---
 
-**Next Session**: Add `NIXPACKS_NODE_VERSION=20` to Railway environment variables and redeploy.
+**Next Session**: Check Railway deployment logs to verify build succeeds, then test the deployed application!

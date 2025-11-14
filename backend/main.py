@@ -82,10 +82,20 @@ async def global_exception_handler(request, exc):
     )
 
 
-# Serve React frontend (must be LAST - after all API routes)
+# Serve React frontend static assets (CSS, JS, images)
 frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 if os.path.exists(frontend_dist):
-    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+    # Mount static files for assets
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+
+    # Catch-all route for SPA - serve index.html for all non-API routes
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        """Serve React SPA for all routes (except API routes which are already registered)"""
+        from fastapi.responses import FileResponse
+        index_path = os.path.join(frontend_dist, "index.html")
+        return FileResponse(index_path)
+
     print(f"✅ Serving frontend from {frontend_dist}")
 else:
     print(f"⚠️  Frontend dist not found at {frontend_dist}")

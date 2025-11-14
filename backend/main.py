@@ -30,10 +30,10 @@ app.add_middleware(
 )
 
 
-# Health check endpoint
-@app.get("/")
+# Health check endpoints
+@app.get("/api/health")
 async def root():
-    """Health check endpoint"""
+    """API health check endpoint"""
     return {
         "status": "online",
         "service": "Island Glass CRM API",

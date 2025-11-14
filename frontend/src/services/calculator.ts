@@ -83,7 +83,7 @@ export interface QuoteResult {
 export class GlassPriceCalculator {
   private config: CalculatorConfig;
   private MINIMUM_SQ_FT: number;
-  private MARKUP_DIVISOR: number;
+  // private _MARKUP_DIVISOR: number; // Unused for now
   private CONTRACTOR_DISCOUNT_RATE: number;
   private FLAT_POLISH_RATE: number;
   private formula_config: CalculatorConfig['formula_config'];
@@ -94,7 +94,7 @@ export class GlassPriceCalculator {
     // Load system settings (with fallback defaults)
     const settings = config.settings || {};
     this.MINIMUM_SQ_FT = settings.minimum_sq_ft || 3.0;
-    this.MARKUP_DIVISOR = settings.markup_divisor || 0.28;
+    // this._MARKUP_DIVISOR = settings.markup_divisor || 0.28; // Unused for now
     this.CONTRACTOR_DISCOUNT_RATE = settings.contractor_discount_rate || 0.15;
     this.FLAT_POLISH_RATE = settings.flat_polish_rate || 0.27;
 

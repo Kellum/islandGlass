@@ -12,20 +12,21 @@ interface GlassConfig {
   never_tempered: boolean;
 }
 
-interface Markup {
-  name: string;
-  percentage: number;
-}
+// Unused interfaces - keeping for future reference
+// interface Markup {
+//   name: string;
+//   percentage: number;
+// }
 
-interface BeveledPricing {
-  glass_thickness: string;
-  price_per_inch: number;
-}
+// interface BeveledPricing {
+//   glass_thickness: string;
+//   price_per_inch: number;
+// }
 
-interface ClippedCornersPricing {
-  num_corners: number;
-  price: number;
-}
+// interface ClippedCornersPricing {
+//   num_corners: number;
+//   price: number;
+// }
 
 interface CalculatorSettings {
   minimum_sq_ft: number;

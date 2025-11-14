@@ -5,6 +5,8 @@ Main application entry point
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+import os
 import config
 
 # Import routers
@@ -78,6 +80,15 @@ async def global_exception_handler(request, exc):
             "path": str(request.url),
         },
     )
+
+
+# Serve React frontend (must be LAST - after all API routes)
+frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+if os.path.exists(frontend_dist):
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+    print(f"✅ Serving frontend from {frontend_dist}")
+else:
+    print(f"⚠️  Frontend dist not found at {frontend_dist}")
 
 
 if __name__ == "__main__":

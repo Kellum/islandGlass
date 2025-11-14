@@ -1,7 +1,7 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
 
-// API base URL - FastAPI backend
-const API_BASE_URL = 'http://localhost:8000';
+// API base URL - Use relative path in production, localhost in development
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 const API_V1_PREFIX = '/api/v1';
 
 // Token storage keys

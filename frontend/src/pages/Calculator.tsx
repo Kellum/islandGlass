@@ -1,20 +1,36 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { GlassPriceCalculator } from '../services/calculator';
-import type { CalculatorConfig, QuoteParams } from '../services/calculator';
+import type { CalculatorConfig, QuoteParams, QuoteResult } from '../services/calculator';
+import { fractionToDecimal, decimalToFraction } from '../utils/fractions';
 
 // In production, the backend serves the frontend, so use relative URLs
 // In development, use localhost:8000
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
+interface SavedItem {
+  id: string;
+  description: string;
+  formData: QuoteParams;
+  result: QuoteResult;
+  widthInput: string;
+  heightInput: string;
+  diameterInput: string;
+}
+
 const Calculator = () => {
   const [config, setConfig] = useState<CalculatorConfig | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Form state
+  // Fraction input strings (what the user types)
+  const [widthInput, setWidthInput] = useState('');
+  const [heightInput, setHeightInput] = useState('');
+  const [diameterInput, setDiameterInput] = useState('');
+
+  // Form state (with decimal values for calculation)
   const [formData, setFormData] = useState<QuoteParams>({
-    width: 24,
-    height: 36,
+    width: 0,
+    height: 0,
     thickness: '1/4"',
     glass_type: 'clear',
     quantity: 1,
@@ -27,6 +43,11 @@ const Calculator = () => {
     is_circular: false,
     is_contractor: false,
   });
+
+  // Multiple items state
+  const [items, setItems] = useState<SavedItem[]>([]);
+  const [isItemsExpanded, setIsItemsExpanded] = useState(true);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // Fetch config on mount
   useEffect(() => {
@@ -50,6 +71,14 @@ const Calculator = () => {
   // Calculate price on every form change
   const result = useMemo(() => {
     if (!config) return null;
+
+    // Don't calculate if no dimensions entered yet (better UX)
+    const hasValidDimensions = formData.is_circular
+      ? (formData.diameter && formData.diameter > 0)
+      : (formData.width && formData.width > 0 && formData.height && formData.height > 0);
+
+    if (!hasValidDimensions) return null;
+
     const calculator = new GlassPriceCalculator(config);
     return calculator.calculateQuote(formData);
   }, [config, formData]);
@@ -57,6 +86,100 @@ const Calculator = () => {
   const updateField = <K extends keyof QuoteParams>(field: K, value: QuoteParams[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  // Handle fraction input changes
+  const handleWidthChange = (input: string) => {
+    setWidthInput(input);
+    const decimal = fractionToDecimal(input);
+    setFormData((prev) => ({ ...prev, width: decimal }));
+  };
+
+  const handleHeightChange = (input: string) => {
+    setHeightInput(input);
+    const decimal = fractionToDecimal(input);
+    setFormData((prev) => ({ ...prev, height: decimal }));
+  };
+
+  const handleDiameterChange = (input: string) => {
+    setDiameterInput(input);
+    const decimal = fractionToDecimal(input);
+    setFormData((prev) => ({ ...prev, diameter: decimal }));
+  };
+
+  // Add current item to the list
+  const handleAddItem = () => {
+    if (!result || result.error) return;
+
+    // Generate description
+    let description = '';
+    if (formData.is_circular && formData.diameter) {
+      description = `${diameterInput}" Ø ${formData.thickness} ${formData.glass_type}`;
+    } else {
+      description = `${widthInput}" × ${heightInput}" ${formData.thickness} ${formData.glass_type}`;
+    }
+
+    const newItem: SavedItem = {
+      id: Date.now().toString(),
+      description,
+      formData: { ...formData },
+      result: { ...result },
+      widthInput,
+      heightInput,
+      diameterInput,
+    };
+
+    setItems((prev) => [...prev, newItem]);
+    // Add new item to expanded set (open by default)
+    setExpandedItems((prev) => new Set(prev).add(newItem.id));
+
+    // Reset form to defaults
+    setWidthInput('');
+    setHeightInput('');
+    setDiameterInput('');
+    setFormData({
+      width: 0,
+      height: 0,
+      thickness: '1/4"',
+      glass_type: 'clear',
+      quantity: 1,
+      is_polished: false,
+      is_beveled: false,
+      num_clipped_corners: 0,
+      clip_size: 'under_1',
+      is_tempered: false,
+      is_non_rectangular: false,
+      is_circular: false,
+      is_contractor: formData.is_contractor, // Keep contractor status
+    });
+  };
+
+  // Remove an item from the list
+  const handleRemoveItem = (id: string) => {
+    setItems((prev) => prev.filter((item) => item.id !== id));
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(id);
+      return newSet;
+    });
+  };
+
+  // Toggle individual item expansion
+  const toggleItemExpansion = (id: string) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  // Calculate total for all items
+  const totalPrice = useMemo(() => {
+    return items.reduce((sum, item) => sum + item.result.quote_price, 0);
+  }, [items]);
 
   if (loading) {
     return (
@@ -120,7 +243,17 @@ const Calculator = () => {
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-4 space-y-3">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.is_tempered}
+                  onChange={(e) => updateField('is_tempered', e.target.checked)}
+                  disabled={formData.thickness === '1/8"' || formData.glass_type === 'mirror'}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                />
+                <span className="ml-2 text-sm text-gray-700">Tempered Glass</span>
+              </label>
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -189,13 +322,13 @@ const Calculator = () => {
                   Diameter (inches)
                 </label>
                 <input
-                  type="number"
-                  value={formData.diameter || 24}
-                  onChange={(e) => updateField('diameter', Number(e.target.value))}
+                  type="text"
+                  value={diameterInput}
+                  onChange={(e) => handleDiameterChange(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  min="1"
-                  step="0.125"
+                  placeholder='e.g., 24, 24 1/2, 3/4'
                 />
+                <p className="mt-1 text-xs text-gray-500">Enter as fraction (e.g., 24 1/2) or decimal</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
@@ -204,26 +337,26 @@ const Calculator = () => {
                     Width (inches)
                   </label>
                   <input
-                    type="number"
-                    value={formData.width}
-                    onChange={(e) => updateField('width', Number(e.target.value))}
+                    type="text"
+                    value={widthInput}
+                    onChange={(e) => handleWidthChange(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="1"
-                    step="0.125"
+                    placeholder='e.g., 24, 24 1/2, 3/4'
                   />
+                  <p className="mt-1 text-xs text-gray-500">Enter as fraction (e.g., 24 1/2) or decimal</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Height (inches)
                   </label>
                   <input
-                    type="number"
-                    value={formData.height}
-                    onChange={(e) => updateField('height', Number(e.target.value))}
+                    type="text"
+                    value={heightInput}
+                    onChange={(e) => handleHeightChange(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="1"
-                    step="0.125"
+                    placeholder='e.g., 36, 36 3/4, 1/2'
                   />
+                  <p className="mt-1 text-xs text-gray-500">Enter as fraction (e.g., 36 1/4) or decimal</p>
                 </div>
               </div>
             )}
@@ -310,29 +443,35 @@ const Calculator = () => {
             </div>
           </div>
 
-          {/* Additional Options */}
+          {/* Add Item Button */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Additional Options</h2>
-
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.is_tempered}
-                onChange={(e) => updateField('is_tempered', e.target.checked)}
-                disabled={formData.thickness === '1/8"' || formData.glass_type === 'mirror'}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
-              />
-              <span className="ml-2 text-sm text-gray-700">Tempered Glass</span>
-            </label>
+            <button
+              onClick={handleAddItem}
+              disabled={!result || !!result?.error}
+              className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors"
+            >
+              Add Item to Quote
+            </button>
+            <p className="mt-2 text-xs text-gray-500 text-center">
+              Add this item and continue adding more pieces
+            </p>
           </div>
         </div>
 
         {/* Right Column - Price Summary (3/7) */}
         <div className="lg:col-span-3">
           <div className="bg-white rounded-lg shadow p-6 sticky top-4">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Price Summary</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              {items.length > 0 ? 'Current Item' : 'Price Summary'}
+            </h2>
 
-            {result?.error ? (
+            {!result ? (
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-md text-center">
+                <p className="text-sm text-gray-600">
+                  Enter dimensions to see pricing
+                </p>
+              </div>
+            ) : result?.error ? (
               <div className="p-3 bg-red-50 border border-red-200 rounded-md">
                 <p className="text-sm text-red-800">{result.error}</p>
               </div>
@@ -340,7 +479,9 @@ const Calculator = () => {
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Area:</span>
-                  <span className="font-medium text-gray-900">{result.billable_sq_ft} sq ft</span>
+                  <span className="font-medium text-gray-900">
+                    {decimalToFraction(result.billable_sq_ft)} sq ft
+                  </span>
                 </div>
 
                 <div className="flex justify-between text-sm">
@@ -423,6 +564,211 @@ const Calculator = () => {
                 )}
               </div>
             ) : null}
+
+            {/* Combined Total for Multiple Items */}
+            {items.length > 0 && (
+              <>
+                <div className="mt-6 pt-6 border-t-2 border-gray-300">
+                  <h3 className="text-md font-semibold text-gray-900 mb-3">Quote Total</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Items in quote:</span>
+                      <span className="font-medium text-gray-900">{items.length}</span>
+                    </div>
+                    {result && !result.error && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Current item:</span>
+                        <span className="font-medium text-gray-900">
+                          ${result.quote_price.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Saved items total:</span>
+                      <span className="font-medium text-gray-900">${totalPrice.toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-gray-200 pt-2">
+                      <div className="flex justify-between">
+                        <span className="text-lg font-bold text-gray-900">Grand Total:</span>
+                        <span className="text-2xl font-bold text-blue-600">
+                          ${(totalPrice + (result && !result.error ? result.quote_price : 0)).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items List Accordion */}
+                <div className="mt-4 border-t border-gray-200 pt-4">
+                  <button
+                    onClick={() => setIsItemsExpanded(!isItemsExpanded)}
+                    className="w-full flex items-center justify-between text-left"
+                  >
+                    <h3 className="text-sm font-semibold text-gray-900">
+                      Line Items ({items.length})
+                    </h3>
+                    <svg
+                      className={`w-5 h-5 text-gray-600 transition-transform ${
+                        isItemsExpanded ? 'rotate-180' : ''
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {isItemsExpanded && (
+                    <div className="mt-3 space-y-3">
+                      {items.map((item, index) => {
+                        const isItemExpanded = expandedItems.has(item.id);
+                        return (
+                          <div
+                            key={item.id}
+                            className="p-3 bg-gray-50 rounded border border-gray-200"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <button
+                                onClick={() => toggleItemExpansion(item.id)}
+                                className="flex-1 flex items-start gap-2 text-left hover:bg-gray-100 -m-1 p-1 rounded"
+                              >
+                                <svg
+                                  className={`w-4 h-4 text-gray-600 transition-transform flex-shrink-0 mt-0.5 ${
+                                    isItemExpanded ? 'rotate-90' : ''
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                  />
+                                </svg>
+                                <div className="flex-1">
+                                  <p className="text-xs font-semibold text-gray-900">
+                                    {index + 1}. {item.description}
+                                  </p>
+                                  {item.formData.quantity > 1 && (
+                                    <p className="text-xs text-gray-600">Qty: {item.formData.quantity}</p>
+                                  )}
+                                  {!isItemExpanded && (
+                                    <p className="text-xs font-semibold text-gray-900 mt-1">
+                                      ${item.result.quote_price.toFixed(2)}
+                                    </p>
+                                  )}
+                                </div>
+                              </button>
+                              <button
+                                onClick={() => handleRemoveItem(item.id)}
+                                className="text-red-600 hover:text-red-800 text-xs ml-2"
+                                title="Remove item"
+                              >
+                                ✕
+                              </button>
+                            </div>
+
+                            {/* Price Breakdown */}
+                            {isItemExpanded && (
+                              <div className="space-y-1 pl-3 border-l-2 border-gray-300">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-600">Area:</span>
+                              <span className="text-gray-900">
+                                {decimalToFraction(item.result.billable_sq_ft)} sq ft
+                              </span>
+                            </div>
+
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-600">Base Price:</span>
+                              <span className="text-gray-900">${item.result.base_price.toFixed(2)}</span>
+                            </div>
+
+                            {item.result.polish_price && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">Polish:</span>
+                                <span className="text-gray-900">${item.result.polish_price.toFixed(2)}</span>
+                              </div>
+                            )}
+
+                            {item.result.beveled_price && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">Beveled:</span>
+                                <span className="text-gray-900">${item.result.beveled_price.toFixed(2)}</span>
+                              </div>
+                            )}
+
+                            {item.result.clipped_corners_price && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">Clipped Corners:</span>
+                                <span className="text-gray-900">${item.result.clipped_corners_price.toFixed(2)}</span>
+                              </div>
+                            )}
+
+                            {item.result.tempered_price && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">Tempered (35%):</span>
+                                <span className="text-gray-900">${item.result.tempered_price.toFixed(2)}</span>
+                              </div>
+                            )}
+
+                            {item.result.shape_price && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">Shape (25%):</span>
+                                <span className="text-gray-900">${item.result.shape_price.toFixed(2)}</span>
+                              </div>
+                            )}
+
+                            <div className="flex justify-between text-xs font-medium text-gray-900 pt-1 border-t border-gray-300">
+                              <span>Subtotal:</span>
+                              <span>${item.result.subtotal.toFixed(2)}</span>
+                            </div>
+
+                            {item.result.contractor_discount && (
+                              <div className="flex justify-between text-xs text-green-600">
+                                <span>Contractor Discount (15%):</span>
+                                <span>-${item.result.contractor_discount.toFixed(2)}</span>
+                              </div>
+                            )}
+
+                            <div className="flex justify-between text-xs text-gray-900 pt-1 border-t border-gray-300">
+                              <span>Cost subtotal:</span>
+                              <span>${(item.result.contractor_discount ? item.result.discounted_subtotal : item.result.subtotal)?.toFixed(2)}</span>
+                            </div>
+
+                            {item.formData.quantity > 1 && (
+                              <div className="flex justify-between text-xs text-gray-900">
+                                <span>Quantity:</span>
+                                <span>× {item.formData.quantity}</span>
+                              </div>
+                            )}
+
+                            <div className="flex justify-between text-xs text-gray-900">
+                              <span>Total cost:</span>
+                              <span>${item.result.total.toFixed(2)}</span>
+                            </div>
+
+                            <div className="flex justify-between text-xs font-semibold text-blue-600 pt-1 border-t border-gray-300">
+                              <span>Quote Price:</span>
+                              <span>${item.result.quote_price.toFixed(2)}</span>
+                            </div>
+                          </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@ import ClientDetail from './pages/ClientDetail';
 import Vendors from './pages/Vendors';
 import Schedule from './pages/Schedule';
 import Calculator from './pages/Calculator';
-import CalculatorSettings from './pages/CalculatorSettings';
+import AdminSettings from './pages/AdminSettings';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -117,11 +117,11 @@ function App() {
               }
             />
             <Route
-              path="/calculator/settings"
+              path="/admin/settings"
               element={
                 <ProtectedRoute>
                   <Layout>
-                    <CalculatorSettings />
+                    <AdminSettings />
                   </Layout>
                 </ProtectedRoute>
               }

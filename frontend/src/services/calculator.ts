@@ -3,7 +3,11 @@
  *
  * Implements all pricing formulas from GlassPricePro
  *
- * ULTIMATE FORMULA: Final Quote Price = Combined Cost ÷ 0.28 (configurable)
+ * PRICING MODEL:
+ * - Database stores WHOLESALE costs (base_price, polish_price) = actual cost from suppliers
+ * - Calculator applies markup formula (default: ÷ 0.28) to convert wholesale → retail
+ * - ULTIMATE FORMULA: Final Quote Price = Wholesale Combined Cost ÷ 0.28 (configurable)
+ * - Example: $4.05/sq ft wholesale ÷ 0.28 = $14.46/sq ft retail quote
  */
 
 export interface GlassConfigItem {
@@ -253,10 +257,13 @@ export class GlassPriceCalculator {
 
   /**
    * Calculate base glass price
+   *
+   * NOTE: base_price is the WHOLESALE cost per sq ft (from supplier)
+   * The markup formula (÷ 0.28) is applied later to get retail quote price
    */
   calculateBasePrice(thickness: string, glass_type: string, sq_ft: number): number {
     const key = `${thickness}_${glass_type}`;
-    const base_rate = this.config.glass_config[key]?.base_price || 0;
+    const base_rate = this.config.glass_config[key]?.base_price || 0; // WHOLESALE cost/sq ft
     return sq_ft * base_rate;
   }
 

@@ -25,6 +25,7 @@ RAILWAY_URL = os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
 ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React dev server
     "http://localhost:3001",  # React dev server (alternate port)
+    "http://localhost:3002",  # React dev server (alternate port 2)
     "http://localhost:5173",  # Vite dev server
     "http://localhost:8050",  # Old Dash app (for transition)
 ]

@@ -481,7 +481,13 @@ class Database:
             }
 
     def get_calculator_config(self) -> Dict:
-        """Get complete calculator configuration for pricing"""
+        """Get complete calculator configuration for pricing
+
+        PRICING MODEL:
+        - base_price and polish_price store WHOLESALE COSTS (actual cost from suppliers)
+        - The calculator applies the markup formula (default: ÷ 0.28) to convert wholesale → retail
+        - Example: $4.05/sq ft wholesale ÷ 0.28 = $14.46/sq ft retail quote
+        """
         try:
             # Get all config data
             glass_config_rows = self.get_glass_config()
@@ -492,12 +498,13 @@ class Database:
             formula_config = self.get_pricing_formula_config()
 
             # Transform glass_config to dict
+            # NOTE: base_price and polish_price are WHOLESALE costs
             glass_config = {}
             for row in glass_config_rows:
                 key = f"{row['thickness']}_{row['type']}"
                 glass_config[key] = {
-                    'base_price': float(row['base_price']),
-                    'polish_price': float(row['polish_price']),
+                    'base_price': float(row['base_price']),  # WHOLESALE cost per sq ft
+                    'polish_price': float(row['polish_price']),  # WHOLESALE polish cost per inch
                     'only_tempered': row.get('only_tempered', False),
                     'no_polish': row.get('no_polish', False),
                     'never_tempered': row.get('never_tempered', False)

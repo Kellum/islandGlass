@@ -30,7 +30,6 @@ export default function Sidebar() {
     { path: '/jobs', label: 'Jobs', icon: BriefcaseIcon },
     { path: '/schedule', label: 'Schedule', icon: CalendarIcon },
     { path: '/calculator', label: 'Calculator', icon: CalculatorIcon },
-    { path: '/calculator/settings', label: 'Calculator Settings', icon: Cog6ToothIcon, indent: true },
     { path: '/clients', label: 'Clients', icon: UserGroupIcon },
     { path: '/vendors', label: 'Vendors', icon: BuildingOfficeIcon },
   ];
@@ -76,6 +75,20 @@ export default function Sidebar() {
             <p className="text-xs text-gray-400">Admin</p>
           </div>
         </div>
+
+        {/* Admin Settings Link */}
+        <Link
+          to="/admin/settings"
+          className={`w-full flex items-center space-x-2 px-4 py-2 mb-2 rounded-lg transition-colors ${
+            isActive('/admin/settings')
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+          }`}
+        >
+          <Cog6ToothIcon className="h-5 w-5" />
+          <span className="text-sm font-medium">Admin Settings</span>
+        </Link>
+
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"

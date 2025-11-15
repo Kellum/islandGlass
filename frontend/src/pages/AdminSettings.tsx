@@ -67,6 +67,10 @@ export default function AdminSettings() {
   const [editingGlass, setEditingGlass] = useState<number | null>(null);
   const [newGlass, setNewGlass] = useState<Partial<GlassConfig> | null>(null);
 
+  // Sort state
+  const [sortColumn, setSortColumn] = useState<'thickness' | 'type' | 'base_price' | 'polish_price'>('thickness');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
   useEffect(() => {
     loadConfig();
   }, []);
@@ -91,6 +95,7 @@ export default function AdminSettings() {
           never_tempered: value.never_tempered
         };
       });
+
       setGlassConfigs(glassArray);
       setMarkups(config.markups || {});
       setBeveledPricing(config.beveled_pricing || {});
@@ -107,6 +112,60 @@ export default function AdminSettings() {
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 5000);
+  };
+
+  // Helper function to convert thickness string to numeric value for sorting
+  const thicknessToNumber = (thickness: string): number => {
+    const cleaned = thickness.replace('"', '');
+    if (cleaned.includes('/')) {
+      const [numerator, denominator] = cleaned.split('/').map(Number);
+      return numerator / denominator;
+    }
+    return parseFloat(cleaned);
+  };
+
+  // Handle column header click to sort
+  const handleSort = (column: 'thickness' | 'type' | 'base_price' | 'polish_price') => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to ascending
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  // Get sorted glass configs
+  const sortedGlassConfigs = [...glassConfigs].sort((a, b) => {
+    let compareValue = 0;
+
+    switch (sortColumn) {
+      case 'thickness':
+        compareValue = thicknessToNumber(a.thickness) - thicknessToNumber(b.thickness);
+        break;
+      case 'type':
+        compareValue = a.type.localeCompare(b.type);
+        break;
+      case 'base_price':
+        compareValue = a.base_price - b.base_price;
+        break;
+      case 'polish_price':
+        compareValue = a.polish_price - b.polish_price;
+        break;
+    }
+
+    return sortDirection === 'asc' ? compareValue : -compareValue;
+  });
+
+  // Render sort indicator
+  const SortIndicator = ({ column }: { column: string }) => {
+    if (sortColumn !== column) return null;
+    return (
+      <span className="ml-1 text-xs">
+        {sortDirection === 'asc' ? '▲' : '▼'}
+      </span>
+    );
   };
 
   const handleUpdateGlass = async (glass: GlassConfig) => {
@@ -269,10 +328,30 @@ export default function AdminSettings() {
             <table className="min-w-full bg-white border">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2 border text-left">Thickness</th>
-                  <th className="px-4 py-2 border text-left">Type</th>
-                  <th className="px-4 py-2 border text-left">Wholesale Cost ($/sq ft)</th>
-                  <th className="px-4 py-2 border text-left">Wholesale Polish ($/inch)</th>
+                  <th
+                    className="px-4 py-2 border text-left cursor-pointer hover:bg-gray-100 select-none"
+                    onClick={() => handleSort('thickness')}
+                  >
+                    Thickness <SortIndicator column="thickness" />
+                  </th>
+                  <th
+                    className="px-4 py-2 border text-left cursor-pointer hover:bg-gray-100 select-none"
+                    onClick={() => handleSort('type')}
+                  >
+                    Type <SortIndicator column="type" />
+                  </th>
+                  <th
+                    className="px-4 py-2 border text-left cursor-pointer hover:bg-gray-100 select-none"
+                    onClick={() => handleSort('base_price')}
+                  >
+                    Wholesale Cost ($/sq ft) <SortIndicator column="base_price" />
+                  </th>
+                  <th
+                    className="px-4 py-2 border text-left cursor-pointer hover:bg-gray-100 select-none"
+                    onClick={() => handleSort('polish_price')}
+                  >
+                    Wholesale Polish ($/inch) <SortIndicator column="polish_price" />
+                  </th>
                   <th className="px-4 py-2 border text-center">Only Tempered</th>
                   <th className="px-4 py-2 border text-center">No Polish</th>
                   <th className="px-4 py-2 border text-center">Never Tempered</th>
@@ -280,7 +359,7 @@ export default function AdminSettings() {
                 </tr>
               </thead>
               <tbody>
-                {glassConfigs.map((glass) => (
+                {sortedGlassConfigs.map((glass) => (
                   <tr key={glass.id} className="hover:bg-gray-50">
                     {editingGlass === glass.id ? (
                       <>

@@ -503,6 +503,7 @@ class Database:
             for row in glass_config_rows:
                 key = f"{row['thickness']}_{row['type']}"
                 glass_config[key] = {
+                    'id': row['id'],  # Include ID for admin updates
                     'base_price': float(row['base_price']),  # WHOLESALE cost per sq ft
                     'polish_price': float(row['polish_price']),  # WHOLESALE polish cost per inch
                     'only_tempered': row.get('only_tempered', False),

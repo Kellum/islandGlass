@@ -74,17 +74,21 @@ export default function AdminSettings() {
   const loadConfig = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/v1/calculator/config');
+      const response = await api.get('/calculator/config');
       const config = response.data;
 
       // Parse glass configs
       const glassArray: GlassConfig[] = Object.entries(config.glass_config).map(([key, value]: [string, any]) => {
         const [thickness, type] = key.split('_');
         return {
-          id: Math.random(), // Temporary ID - we'll need actual IDs from backend
+          id: value.id, // Use actual ID from backend
           thickness,
           type,
-          ...value
+          base_price: value.base_price,
+          polish_price: value.polish_price,
+          only_tempered: value.only_tempered,
+          no_polish: value.no_polish,
+          never_tempered: value.never_tempered
         };
       });
       setGlassConfigs(glassArray);

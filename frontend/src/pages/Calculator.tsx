@@ -3,7 +3,9 @@ import axios from 'axios';
 import { GlassPriceCalculator } from '../services/calculator';
 import type { CalculatorConfig, QuoteParams } from '../services/calculator';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// In production, the backend serves the frontend, so use relative URLs
+// In development, use localhost:8000
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
 const Calculator = () => {
   const [config, setConfig] = useState<CalculatorConfig | null>(null);

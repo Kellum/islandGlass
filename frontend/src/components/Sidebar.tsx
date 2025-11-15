@@ -11,7 +11,13 @@ import {
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 
-export default function Sidebar() {
+interface SidebarProps {
+  isMobile: boolean;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isMobile, isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -25,6 +31,13 @@ export default function Sidebar() {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Handle navigation link click
+  const handleNavClick = () => {
+    if (isMobile) {
+      onClose();
+    }
+  };
+
   const navItems = [
     { path: '/', label: 'Dashboard', icon: HomeIcon },
     { path: '/jobs', label: 'Jobs', icon: BriefcaseIcon },
@@ -35,7 +48,13 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="fixed inset-y-0 left-0 w-64 bg-gray-900 text-white flex flex-col z-40 shadow-xl">
+    <div
+      className={`fixed inset-y-0 left-0 w-64 bg-gray-900 text-white flex flex-col shadow-xl transition-transform duration-300 ease-in-out ${
+        isMobile
+          ? `z-50 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
+          : 'z-40 translate-x-0'
+      }`}
+    >
       {/* Logo Section */}
       <div className="flex items-center h-16 px-6 bg-gray-800 flex-shrink-0">
         <h1 className="text-xl font-bold truncate">Island Glass CRM</h1>
@@ -52,6 +71,7 @@ export default function Sidebar() {
             <Link
               key={item.path}
               to={item.path}
+              onClick={handleNavClick}
               className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                 indent ? 'ml-4' : ''
               } ${
@@ -79,6 +99,7 @@ export default function Sidebar() {
         {/* Admin Settings Link */}
         <Link
           to="/admin/settings"
+          onClick={handleNavClick}
           className={`w-full flex items-center space-x-2 px-4 py-2 mb-2 rounded-lg transition-colors ${
             isActive('/admin/settings')
               ? 'bg-blue-600 text-white'

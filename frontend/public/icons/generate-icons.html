@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate PWA Icons</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    button {
+      background: #3B82F6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #2563EB;
+    }
+    #preview {
+      margin: 20px 0;
+      display: flex;
+      gap: 20px;
+    }
+    .icon-preview {
+      text-align: center;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      display: block;
+      margin: 10px auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Generate PWA Icons</h1>
+  <p>Click the buttons below to download the required PWA icons.</p>
+
+  <div>
+    <button onclick="generateIcon(192)">Download 192x192 Icon</button>
+    <button onclick="generateIcon(512)">Download 512x512 Icon</button>
+  </div>
+
+  <div id="preview"></div>
+
+  <script>
+    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#111827"/>
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#3B82F6" stroke-width="20" opacity="0.3"/>
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#3B82F6" stroke-width="15"/>
+  <text x="256" y="280" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#ffffff" text-anchor="middle">IG</text>
+</svg>`;
+
+    function generateIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      const img = new Image();
+      const svg = new Blob([svgContent], {type: 'image/svg+xml'});
+      const url = URL.createObjectURL(svg);
+
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+
+        // Download the image
+        canvas.toBlob(function(blob) {
+          const link = document.createElement('a');
+          link.download = `icon-${size}x${size}.png`;
+          link.href = URL.createObjectURL(blob);
+          link.click();
+        });
+
+        // Show preview
+        const preview = document.getElementById('preview');
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'icon-preview';
+        previewDiv.innerHTML = `<p>${size}x${size}</p>`;
+        previewDiv.appendChild(canvas.cloneNode());
+        preview.appendChild(previewDiv);
+      };
+
+      img.src = url;
+    }
+  </script>
+</body>
+</html>

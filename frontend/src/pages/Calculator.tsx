@@ -657,7 +657,7 @@ const Calculator = () => {
                                   <p className="text-xs font-semibold text-gray-900">
                                     {index + 1}. {item.description}
                                   </p>
-                                  {item.formData.quantity > 1 && (
+                                  {(item.formData.quantity ?? 1) > 1 && (
                                     <p className="text-xs text-gray-600">Qty: {item.formData.quantity}</p>
                                   )}
                                   {!isItemExpanded && (
@@ -743,7 +743,7 @@ const Calculator = () => {
                               <span>${(item.result.contractor_discount ? item.result.discounted_subtotal : item.result.subtotal)?.toFixed(2)}</span>
                             </div>
 
-                            {item.formData.quantity > 1 && (
+                            {(item.formData.quantity ?? 1) > 1 && (
                               <div className="flex justify-between text-xs text-gray-900">
                                 <span>Quantity:</span>
                                 <span>× {item.formData.quantity}</span>

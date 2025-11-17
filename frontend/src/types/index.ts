@@ -86,19 +86,45 @@ export interface Client {
   primary_contact_phone: string | null;
 }
 
-// Vendor types
+// Vendor types - matches backend VendorResponse
 export interface Vendor {
   vendor_id: number;
   vendor_name: string;
-  contact_name: string | null;
+  vendor_type: string | null;
+  contact_person: string | null;
   email: string | null;
   phone: string | null;
-  address: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
   city: string | null;
   state: string | null;
   zip_code: string | null;
-  website: string | null;
+  is_active: boolean;
   notes: string | null;
-  created_at: string;
-  updated_at: string;
+  company_id: string | null;
+  created_by: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  // Primary contact info for list view
+  primary_contact_name: string | null;
+  primary_contact_email: string | null;
+  primary_contact_phone: string | null;
+}
+
+// Vendor Contact
+export interface VendorContact {
+  id: number;
+  vendor_id: number;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  job_title: string | null;
+  is_primary: boolean;
+  created_at: string | null;
+}
+
+// Vendor Detail - matches backend VendorDetailResponse
+export interface VendorDetail extends Vendor {
+  contacts: VendorContact[];
 }

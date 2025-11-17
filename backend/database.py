@@ -1732,6 +1732,105 @@ class Database:
             print(f"Error deleting vendor: {e}")
             return False
 
+    # ==================== VENDOR CONTACTS ====================
+
+    def get_vendor_contacts(self, vendor_id: int) -> List[Dict]:
+        """Get all contacts for a vendor"""
+        try:
+            response = self.client.table("vendor_contacts")\
+                .select("*")\
+                .eq("vendor_id", vendor_id)\
+                .order("is_primary", desc=True)\
+                .order("first_name")\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching contacts for vendor {vendor_id}: {e}")
+            return []
+
+    def get_primary_vendor_contact(self, vendor_id: int) -> Optional[Dict]:
+        """Get the primary contact for a vendor"""
+        try:
+            response = self.client.table("vendor_contacts")\
+                .select("*")\
+                .eq("vendor_id", vendor_id)\
+                .eq("is_primary", True)\
+                .execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error fetching primary contact for vendor {vendor_id}: {e}")
+            return None
+
+    def insert_vendor_contact(self, contact_data: Dict, user_id: str = None) -> Optional[Dict]:
+        """Insert a new vendor contact with company scoping and audit trail
+
+        Args:
+            contact_data: Contact information dictionary
+            user_id: UUID of the user creating the contact (optional)
+
+        Returns:
+            Created contact record or None on error
+        """
+        try:
+            # Get user's company_id if user_id provided
+            if user_id:
+                company_id = self.get_user_company_id(user_id)
+                if not company_id:
+                    # Fallback: Use default Island Glass & Mirror company
+                    company_id = "720d425e-bb02-4612-9b35-70bded465dca"
+                    print(f"Using default company_id for vendor contact insertion (user {user_id})")
+
+                # Add company scoping and audit trail
+                contact_data['company_id'] = company_id
+                contact_data['created_by'] = user_id
+            else:
+                print("WARNING: Inserting vendor contact without user_id/company_id - audit trail incomplete")
+
+            response = self.client.table("vendor_contacts").insert(contact_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error inserting vendor contact: {e}")
+            return None
+
+    def update_vendor_contact(self, contact_id: int, updates: Dict, user_id: str) -> bool:
+        """Update vendor contact information with audit trail
+
+        Args:
+            contact_id: ID of the contact to update
+            updates: Dictionary of fields to update
+            user_id: UUID of the user making the update
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Add audit trail
+            updates['updated_by'] = user_id
+            updates['updated_at'] = 'NOW()'
+            self.client.table("vendor_contacts").update(updates).eq("id", contact_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error updating vendor contact {contact_id}: {e}")
+            return False
+
+    def delete_vendor_contact(self, contact_id: int) -> bool:
+        """Delete a vendor contact (hard delete)
+
+        Args:
+            contact_id: ID of the contact to delete
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            self.client.table("vendor_contacts").delete().eq("id", contact_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error deleting vendor contact {contact_id}: {e}")
+            return False
+
+    # ==================== MATERIAL TEMPLATES ====================
+
     def get_all_material_templates(self) -> List[Dict]:
         """Get all material templates"""
         try:

@@ -3,8 +3,53 @@ Vendor Models for FastAPI
 Pydantic models for vendor management
 """
 from pydantic import BaseModel, EmailStr, field_validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
+
+
+class VendorContactBase(BaseModel):
+    """Base model for Vendor Contact"""
+    first_name: str
+    last_name: str
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    job_title: Optional[str] = None  # e.g., "Sales Rep", "Account Manager", "Owner"
+    is_primary: bool = False
+
+    @field_validator('first_name', 'last_name')
+    @classmethod
+    def name_not_empty(cls, v: str) -> str:
+        """Ensure names are not empty or just whitespace"""
+        if not v or not v.strip():
+            raise ValueError('Name cannot be empty')
+        if len(v.strip()) < 2:
+            raise ValueError('Name must be at least 2 characters')
+        return v.strip()
+
+
+class VendorContactCreate(VendorContactBase):
+    """Create a new vendor contact"""
+    pass
+
+
+class VendorContactUpdate(BaseModel):
+    """Update vendor contact - all fields optional"""
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    job_title: Optional[str] = None
+    is_primary: Optional[bool] = None
+
+
+class VendorContactResponse(VendorContactBase):
+    """Vendor contact response with database fields"""
+    id: int
+    vendor_id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 
 class VendorBase(BaseModel):
@@ -51,8 +96,9 @@ class VendorBase(BaseModel):
 
 
 class VendorCreate(VendorBase):
-    """Create a new vendor"""
-    pass
+    """Create a new vendor with contacts"""
+    primary_contact: Optional[VendorContactCreate] = None
+    additional_contacts: Optional[List[VendorContactCreate]] = []
 
 
 class VendorUpdate(BaseModel):
@@ -97,6 +143,18 @@ class VendorResponse(VendorBase):
     created_by: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    # Primary contact info for list view
+    primary_contact_name: Optional[str] = None
+    primary_contact_email: Optional[str] = None
+    primary_contact_phone: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class VendorDetailResponse(VendorResponse):
+    """Vendor detail response with full contact list"""
+    contacts: List[VendorContactResponse] = []
 
     class Config:
         from_attributes = True

@@ -11,6 +11,7 @@ import JobDetail from './pages/JobDetail';
 import Clients from './pages/Clients';
 import ClientDetail from './pages/ClientDetail';
 import Vendors from './pages/Vendors';
+import VendorDetail from './pages/VendorDetail';
 import Schedule from './pages/Schedule';
 import Calculator from './pages/Calculator';
 import AdminSettings from './pages/AdminSettings';
@@ -92,6 +93,16 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <Vendors />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/vendors/:id"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <VendorDetail />
                   </Layout>
                 </ProtectedRoute>
               }

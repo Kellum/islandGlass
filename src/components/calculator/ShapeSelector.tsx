@@ -18,7 +18,7 @@ const shapes: { id: Shape; label: string; icon: typeof Square }[] = [
 export function ShapeSelector({ value, onChange }: ShapeSelectorProps) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">Shape</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Shape</label>
       <div className="grid grid-cols-3 gap-2 relative">
         {shapes.map((shape) => {
           const Icon = shape.icon;
@@ -30,13 +30,13 @@ export function ShapeSelector({ value, onChange }: ShapeSelectorProps) {
               onClick={() => onChange(shape.id)}
               className={cn(
                 'relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg text-sm font-medium transition-colors z-10',
-                isSelected ? 'text-primary-700' : 'text-gray-600 hover:text-gray-800'
+                isSelected ? 'text-primary-700' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
               )}
             >
               {isSelected && (
                 <motion.div
                   layoutId="shape-pill"
-                  className="absolute inset-0 bg-primary-50 border-2 border-primary-200 rounded-lg"
+                  className="absolute inset-0 bg-primary-50 dark:bg-primary-900/30 border-2 border-primary-200 rounded-lg"
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 />
               )}

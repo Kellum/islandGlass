@@ -19,10 +19,10 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border min-w-[300px] ${
               toast.type === 'success'
-                ? 'bg-green-50 border-green-200 text-green-800'
+                ? 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/40 dark:border-green-800 dark:text-green-300'
                 : toast.type === 'error'
-                  ? 'bg-red-50 border-red-200 text-red-800'
-                  : 'bg-blue-50 border-blue-200 text-blue-800'
+                  ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/40 dark:border-red-800 dark:text-red-300'
+                  : 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-300'
             }`}
           >
             {toast.type === 'success' && <CheckCircle className="w-5 h-5 shrink-0" />}

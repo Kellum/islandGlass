@@ -82,14 +82,14 @@ export function PinGate({ onAuthenticate, isValidating, error }: PinGateProps) {
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4"
       >
         <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-14 h-14 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
             <Lock className="w-7 h-7 text-primary-600" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900">Admin Access</h2>
-          <p className="text-sm text-gray-500 mt-1">Enter your 4-digit PIN</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Admin Access</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Enter your 4-digit PIN</p>
         </div>
 
         <motion.div
@@ -113,7 +113,7 @@ export function PinGate({ onAuthenticate, isValidating, error }: PinGateProps) {
                 onChange={(e) => handleDigitChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 onPaste={handlePaste}
-                className="w-14 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                className="w-14 h-14 text-center text-2xl font-bold border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all dark:bg-gray-900 dark:text-gray-100"
               />
             </motion.div>
           ))}

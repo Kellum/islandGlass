@@ -173,22 +173,22 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
         <CardContent>
           <div className="flex items-center gap-2 mb-4">
             <DollarSign className="w-5 h-5 text-primary-600" />
-            <h3 className="text-base font-semibold text-gray-900">Your Markup</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Your Markup</h3>
           </div>
 
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             How much do you mark up on cost?
           </p>
 
           {/* Mode picker */}
-          <div className="inline-flex rounded-lg border border-gray-200 p-0.5 mb-4">
+          <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 p-0.5 mb-4">
             <button
               type="button"
               onClick={() => setMarkupMode('percentage')}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 markupMode === 'percentage'
                   ? 'bg-primary-600 text-white font-medium'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
             >
               Percentage
@@ -199,7 +199,7 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 markupMode === 'dollar'
                   ? 'bg-primary-600 text-white font-medium'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
             >
               Dollar
@@ -209,7 +209,7 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
           <div className="flex items-center gap-3 mb-4">
             {markupMode === 'percentage' ? (
               <>
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
                   Mark up by
                 </label>
                 <input
@@ -218,24 +218,24 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
                   min="0"
                   value={markupDisplayValue}
                   onChange={(e) => handleMarkupChange(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-24 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm w-24 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:text-gray-100"
                 />
-                <span className="text-sm font-medium text-gray-700">%</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">%</span>
               </>
             ) : (
               <>
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
                   For every $1 of cost, charge:
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm">$</span>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     value={markupDisplayValue}
                     onChange={(e) => handleMarkupChange(e.target.value)}
-                    className="border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-sm w-28 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg pl-7 pr-3 py-2 text-sm w-28 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:text-gray-100"
                   />
                 </div>
               </>
@@ -243,14 +243,14 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
           </div>
 
           {currentMultiplierRaw > 0 && (
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-              <p className="text-sm text-blue-900">
+            <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-sm text-blue-900 dark:text-blue-200">
                 <span className="font-medium">Example:</span> If glass costs you{' '}
                 <span className="font-semibold">$10.00</span>
               </p>
-              <p className="text-sm text-blue-900 mt-1">
+              <p className="text-sm text-blue-900 dark:text-blue-200 mt-1">
                 You charge the customer:{' '}
-                <span className="font-semibold text-blue-700">
+                <span className="font-semibold text-blue-700 dark:text-blue-300">
                   ${formatDollars(10 * currentMultiplierRaw)}
                 </span>
               </p>
@@ -264,10 +264,10 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
         <CardContent>
           <div className="flex items-center gap-2 mb-4">
             <Percent className="w-5 h-5 text-primary-600" />
-            <h3 className="text-base font-semibold text-gray-900">Extra Charges</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Extra Charges</h3>
           </div>
 
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             Extra charges for special glass types and shapes.
           </p>
 
@@ -276,7 +276,7 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
             {temperedMarkup && (
               <div>
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700 whitespace-nowrap">
+                  <label className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                     Tempered glass adds
                   </label>
                   <input
@@ -287,11 +287,11 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
                     onChange={(e) =>
                       updateMarkupValue('tempered', parseFloat(e.target.value) || 0)
                     }
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-20 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm w-20 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:text-gray-100"
                   />
-                  <span className="text-sm text-gray-700">% to the price</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">% to the price</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1 ml-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1">
                   A $100 piece of tempered glass would cost{' '}
                   <span className="font-medium">
                     ${formatDollars(100 * (1 + temperedMarkup.percentage / 100))}
@@ -304,7 +304,7 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
             {shapeMarkup && (
               <div>
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700 whitespace-nowrap">
+                  <label className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                     Custom/circular shapes add
                   </label>
                   <input
@@ -315,11 +315,11 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
                     onChange={(e) =>
                       updateMarkupValue('shape', parseFloat(e.target.value) || 0)
                     }
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-20 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm w-20 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:text-gray-100"
                   />
-                  <span className="text-sm text-gray-700">% to the price</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">% to the price</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1 ml-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1">
                   A $100 custom-shape piece would cost{' '}
                   <span className="font-medium">
                     ${formatDollars(100 * (1 + shapeMarkup.percentage / 100))}
@@ -336,7 +336,7 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
         <CardContent>
           <div className="flex items-center gap-2 mb-4">
             <Ruler className="w-5 h-5 text-primary-600" />
-            <h3 className="text-base font-semibold text-gray-900">Pricing Rules</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Pricing Rules</h3>
           </div>
 
           <div className="space-y-5">
@@ -344,7 +344,7 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
             {minSqFt && (
               <div>
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700 whitespace-nowrap">
+                  <label className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                     Minimum charge:
                   </label>
                   <input
@@ -355,11 +355,11 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
                     onChange={(e) =>
                       updateSettingValue('minimum_sq_ft', parseFloat(e.target.value) || 0)
                     }
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-20 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm w-20 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:text-gray-100"
                   />
-                  <span className="text-sm text-gray-700">square feet</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">square feet</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1 ml-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1">
                   Even if the piece is smaller, charge for at least this many square feet.
                 </p>
               </div>
@@ -369,7 +369,7 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
             {contractorRate && (
               <div>
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700 whitespace-nowrap">
+                  <label className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                     Contractor discount:
                   </label>
                   <input
@@ -384,11 +384,11 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
                         (parseFloat(e.target.value) || 0) / 100
                       )
                     }
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-20 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm w-20 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:text-gray-100"
                   />
-                  <span className="text-sm text-gray-700">%</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">%</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1 ml-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1">
                   Contractors get this percentage off the retail price.
                 </p>
               </div>
@@ -398,11 +398,11 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
             {polishRate && (
               <div>
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700 whitespace-nowrap">
+                  <label className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                     Mirror polish rate per inch:
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm">$</span>
                     <input
                       type="number"
                       step="0.01"
@@ -414,7 +414,7 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
                           parseFloat(e.target.value) || 0
                         )
                       }
-                      className="border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-sm w-24 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="border border-gray-300 dark:border-gray-600 rounded-lg pl-7 pr-3 py-2 text-sm w-24 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:text-gray-100"
                     />
                   </div>
                 </div>
@@ -429,12 +429,12 @@ export function MarkupSettings({ onToast }: MarkupSettingsProps) {
         <CardContent>
           <div className="flex items-center gap-2 mb-4">
             <ToggleLeft className="w-5 h-5 text-primary-600" />
-            <h3 className="text-base font-semibold text-gray-900">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
               What goes into the price?
             </h3>
           </div>
 
-          <p className="text-sm text-gray-600 mb-3">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
             Enable or disable each component of the pricing calculation.
           </p>
 

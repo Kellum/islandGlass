@@ -26,12 +26,12 @@ function PriceRow({
         variant === 'discount'
           ? 'text-green-600'
           : variant === 'total'
-            ? 'text-gray-900 font-semibold'
-            : 'text-gray-600'
+            ? 'text-gray-900 dark:text-gray-100 font-semibold'
+            : 'text-gray-600 dark:text-gray-400'
       }`}
     >
       <span>{label}</span>
-      <span className={variant === 'default' ? 'font-medium text-gray-900' : 'font-medium'}>
+      <span className={variant === 'default' ? 'font-medium text-gray-900 dark:text-gray-100' : 'font-medium'}>
         {variant === 'discount' ? '-' : ''}
         <AnimatedPrice value={Math.abs(value)} />
       </span>
@@ -54,13 +54,13 @@ export function PriceSummary({ result, config, hasItems }: PriceSummaryProps) {
   return (
     <Card>
       <CardContent>
-        <h2 className="text-base font-semibold text-gray-900 mb-4">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">
           {hasItems ? 'Current Item' : 'Price Summary'}
         </h2>
 
         {!result ? (
           <div className="py-8 text-center">
-            <p className="text-sm text-gray-500">Enter dimensions to see pricing</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Enter dimensions to see pricing</p>
           </div>
         ) : result.error ? (
           <motion.div
@@ -76,8 +76,8 @@ export function PriceSummary({ result, config, hasItems }: PriceSummaryProps) {
             {showMinWarning ? (
               <>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Actual Area:</span>
-                  <span className="font-medium text-gray-900">
+                  <span className="text-gray-600 dark:text-gray-400">Actual Area:</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
                     {result.actual_sq_ft.toFixed(2)} sq ft
                   </span>
                 </div>
@@ -90,8 +90,8 @@ export function PriceSummary({ result, config, hasItems }: PriceSummaryProps) {
               </>
             ) : (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Area:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Area:</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">
                   {decimalToFraction(result.billable_sq_ft)} sq ft
                 </span>
               </div>
@@ -99,14 +99,14 @@ export function PriceSummary({ result, config, hasItems }: PriceSummaryProps) {
 
             {/* Per sq ft price */}
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Price per sq ft:</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-gray-600 dark:text-gray-400">Price per sq ft:</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">
                 <AnimatedPrice value={retail(result.base_price) / result.billable_sq_ft} />
               </span>
             </div>
 
             {/* Retail line items */}
-            <div className="border-t border-gray-100 pt-2 mt-1">
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-2 mt-1">
               <PriceRow label="Glass" value={retail(result.base_price)} />
               {result.polish_price != null && (
                 <PriceRow label="Flat Polish" value={retail(result.polish_price)} />
@@ -126,7 +126,7 @@ export function PriceSummary({ result, config, hasItems }: PriceSummaryProps) {
             </div>
 
             {/* Subtotal */}
-            <div className="border-t border-gray-100 pt-2">
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-2">
               <PriceRow label="Subtotal" value={retail(result.subtotal)} variant="total" />
             </div>
 
@@ -140,9 +140,9 @@ export function PriceSummary({ result, config, hasItems }: PriceSummaryProps) {
             )}
 
             {/* Quote Price */}
-            <div className="border-t border-gray-200 pt-3 mt-1">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-1">
               <div className="flex justify-between items-baseline">
-                <span className="text-lg font-bold text-gray-900">Quote Price</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">Quote Price</span>
                 <AnimatedPrice
                   value={result.quote_price}
                   className="text-2xl font-bold text-primary-600"

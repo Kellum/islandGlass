@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Settings, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 export function Header() {
   const location = useLocation();
@@ -8,7 +9,7 @@ export function Header() {
   const isQuotes = location.pathname.startsWith('/quotes');
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-3">
@@ -16,15 +17,16 @@ export function Header() {
               <span className="text-white font-bold text-lg">IG</span>
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900 leading-tight">Island Glass</h1>
-              <p className="text-xs text-gray-500 leading-tight">Price Calculator</p>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-tight">Island Glass</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">Price Calculator</p>
             </div>
           </Link>
 
           <div className="flex items-center gap-1">
+            <ThemeToggle />
             <Link
               to="/quotes"
-              className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <motion.div whileTap={{ scale: 0.9 }}>
                 <FileText
@@ -36,7 +38,7 @@ export function Header() {
             </Link>
             <Link
               to={isAdmin ? '/' : '/admin'}
-              className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <motion.div whileTap={{ scale: 0.9 }}>
                 <Settings

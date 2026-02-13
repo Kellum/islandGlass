@@ -110,18 +110,18 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
   return (
     <div>
       {/* Warning Banner */}
-      <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
-        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+      <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-2">
+        <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-medium text-amber-800">Wholesale Pricing Model</p>
-          <p className="text-sm text-amber-700">
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Wholesale Pricing Model</p>
+          <p className="text-sm text-amber-700 dark:text-amber-400">
             Enter <strong>wholesale costs</strong> (from suppliers). The markup formula converts these to retail quotes.
           </p>
         </div>
       </div>
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Glass Wholesale Costs</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Glass Wholesale Costs</h3>
         <Button size="sm" onClick={() => setShowAddForm(true)}>
           <Plus className="w-4 h-4 mr-1" /> Add Type
         </Button>
@@ -138,19 +138,19 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
           >
             <Card>
               <CardContent>
-                <h4 className="font-medium text-gray-900 mb-3">New Glass Configuration</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">New Glass Configuration</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <input
                     placeholder="Thickness"
                     value={newRow.thickness}
                     onChange={(e) => setNewRow({ ...newRow, thickness: e.target.value })}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-900 dark:text-gray-100"
                   />
                   <input
                     placeholder="Type"
                     value={newRow.type}
                     onChange={(e) => setNewRow({ ...newRow, type: e.target.value })}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-900 dark:text-gray-100"
                   />
                   <input
                     type="number"
@@ -158,7 +158,7 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
                     placeholder="Base $/sqft"
                     value={newRow.base_price || ''}
                     onChange={(e) => setNewRow({ ...newRow, base_price: parseFloat(e.target.value) || 0 })}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-900 dark:text-gray-100"
                   />
                   <input
                     type="number"
@@ -166,7 +166,7 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
                     placeholder="Polish $/in"
                     value={newRow.polish_price || ''}
                     onChange={(e) => setNewRow({ ...newRow, polish_price: parseFloat(e.target.value) || 0 })}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-900 dark:text-gray-100"
                   />
                 </div>
                 <div className="flex flex-wrap gap-4 mt-3">
@@ -197,32 +197,32 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left py-3 px-3 font-medium text-gray-600">Thickness</th>
-              <th className="text-left py-3 px-3 font-medium text-gray-600">Type</th>
-              <th className="text-right py-3 px-3 font-medium text-gray-600">Base $/sqft</th>
-              <th className="text-right py-3 px-3 font-medium text-gray-600">Polish $/in</th>
-              <th className="text-center py-3 px-3 font-medium text-gray-600">Flags</th>
-              <th className="text-right py-3 px-3 font-medium text-gray-600">Actions</th>
+            <tr className="border-b border-gray-200 dark:border-gray-700">
+              <th className="text-left py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Thickness</th>
+              <th className="text-left py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Type</th>
+              <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Base $/sqft</th>
+              <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Polish $/in</th>
+              <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Flags</th>
+              <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Actions</th>
             </tr>
           </thead>
           <tbody>
             {configs.map((row) => (
-              <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50">
+              <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
                 {editingId === row.id ? (
                   <>
                     <td className="py-2 px-3">
                       <input
                         value={editValues.thickness ?? ''}
                         onChange={(e) => setEditValues({ ...editValues, thickness: e.target.value })}
-                        className="border border-gray-300 rounded px-2 py-1 w-20 text-sm"
+                        className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-20 text-sm dark:bg-gray-900 dark:text-gray-100"
                       />
                     </td>
                     <td className="py-2 px-3">
                       <input
                         value={editValues.type ?? ''}
                         onChange={(e) => setEditValues({ ...editValues, type: e.target.value })}
-                        className="border border-gray-300 rounded px-2 py-1 w-20 text-sm"
+                        className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-20 text-sm dark:bg-gray-900 dark:text-gray-100"
                       />
                     </td>
                     <td className="py-2 px-3 text-right">
@@ -231,7 +231,7 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
                         step="0.01"
                         value={editValues.base_price ?? 0}
                         onChange={(e) => setEditValues({ ...editValues, base_price: parseFloat(e.target.value) || 0 })}
-                        className="border border-gray-300 rounded px-2 py-1 w-20 text-sm text-right"
+                        className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-20 text-sm text-right dark:bg-gray-900 dark:text-gray-100"
                       />
                     </td>
                     <td className="py-2 px-3 text-right">
@@ -240,7 +240,7 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
                         step="0.01"
                         value={editValues.polish_price ?? 0}
                         onChange={(e) => setEditValues({ ...editValues, polish_price: parseFloat(e.target.value) || 0 })}
-                        className="border border-gray-300 rounded px-2 py-1 w-20 text-sm text-right"
+                        className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-20 text-sm text-right dark:bg-gray-900 dark:text-gray-100"
                       />
                     </td>
                     <td className="py-2 px-3 text-center">
@@ -252,10 +252,10 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
                     </td>
                     <td className="py-2 px-3 text-right">
                       <div className="flex gap-1 justify-end">
-                        <button onClick={saveEdit} className="p-1 text-green-600 hover:bg-green-50 rounded">
+                        <button onClick={saveEdit} className="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded">
                           <Check className="w-4 h-4" />
                         </button>
-                        <button onClick={() => setEditingId(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded">
+                        <button onClick={() => setEditingId(null)} className="p-1 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -267,7 +267,7 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
                     <td className="py-2 px-3 capitalize">{row.type}</td>
                     <td className="py-2 px-3 text-right tabular-nums">${Number(row.base_price).toFixed(2)}</td>
                     <td className="py-2 px-3 text-right tabular-nums">${Number(row.polish_price).toFixed(2)}</td>
-                    <td className="py-2 px-3 text-center text-xs text-gray-500">
+                    <td className="py-2 px-3 text-center text-xs text-gray-500 dark:text-gray-400">
                       {[
                         row.only_tempered && 'OT',
                         row.no_polish && 'NP',
@@ -278,10 +278,10 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
                     </td>
                     <td className="py-2 px-3 text-right">
                       <div className="flex gap-1 justify-end">
-                        <button onClick={() => startEdit(row)} className="p-1 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded">
+                        <button onClick={() => startEdit(row)} className="p-1 text-gray-400 dark:text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded">
                           <Pencil className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(row.id)} className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded">
+                        <button onClick={() => handleDelete(row.id)} className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>

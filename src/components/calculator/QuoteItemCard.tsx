@@ -19,7 +19,7 @@ export function QuoteItemCard({ item, index, onRemove }: QuoteItemCardProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+      className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
     >
       <div className="flex items-start justify-between">
         <button
@@ -27,10 +27,10 @@ export function QuoteItemCard({ item, index, onRemove }: QuoteItemCardProps) {
           className="flex items-start gap-2 flex-1 text-left"
         >
           <motion.div animate={{ rotate: expanded ? 90 : 0 }} className="mt-0.5">
-            <ChevronRight className="w-4 h-4 text-gray-500" />
+            <ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" />
           </motion.div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {index + 1}. {item.description}
             </p>
             {!expanded && (
@@ -42,7 +42,7 @@ export function QuoteItemCard({ item, index, onRemove }: QuoteItemCardProps) {
         </button>
         <button
           onClick={() => onRemove(item.id)}
-          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+          className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -56,7 +56,7 @@ export function QuoteItemCard({ item, index, onRemove }: QuoteItemCardProps) {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="ml-6 mt-2 space-y-1 pl-3 border-l-2 border-gray-200">
+            <div className="ml-6 mt-2 space-y-1 pl-3 border-l-2 border-gray-200 dark:border-gray-700">
               <Row label="Area" value={`${decimalToFraction(item.result.billable_sq_ft)} sq ft`} />
               <Row label="Base" value={`$${item.result.base_price.toFixed(2)}`} />
               {item.result.polish_price != null && (
@@ -81,7 +81,7 @@ export function QuoteItemCard({ item, index, onRemove }: QuoteItemCardProps) {
                   className="text-green-600"
                 />
               )}
-              <div className="pt-1 border-t border-gray-200">
+              <div className="pt-1 border-t border-gray-200 dark:border-gray-700">
                 <Row
                   label="Quote Price"
                   value={`$${item.result.quote_price.toFixed(2)}`}
@@ -106,7 +106,7 @@ function Row({
   className?: string;
 }) {
   return (
-    <div className={`flex justify-between text-xs ${className || 'text-gray-600'}`}>
+    <div className={`flex justify-between text-xs ${className || 'text-gray-600 dark:text-gray-400'}`}>
       <span>{label}</span>
       <span>{value}</span>
     </div>

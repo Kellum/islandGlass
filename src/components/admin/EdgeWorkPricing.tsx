@@ -84,14 +84,14 @@ export function EdgeWorkPricing({ onToast }: EdgeWorkPricingProps) {
       {/* Beveled Pricing */}
       <Card>
         <CardContent>
-          <h3 className="text-base font-semibold text-gray-900 mb-4">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Beveled Edge Pricing ($ per inch)
           </h3>
           <div className="space-y-3 max-w-md">
             {beveled.map((row, i) => (
               <div key={row.id} className="flex items-center gap-3">
-                <label className="text-sm text-gray-600 w-24">{row.glass_thickness}:</label>
-                <span className="text-sm text-gray-500">$</span>
+                <label className="text-sm text-gray-600 dark:text-gray-400 w-24">{row.glass_thickness}:</label>
+                <span className="text-sm text-gray-500 dark:text-gray-400">$</span>
                 <input
                   type="number"
                   step="0.01"
@@ -101,9 +101,9 @@ export function EdgeWorkPricing({ onToast }: EdgeWorkPricingProps) {
                     updated[i] = { ...row, price_per_inch: parseFloat(e.target.value) || 0 };
                     setBeveled(updated);
                   }}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-28"
+                  className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm w-28 dark:bg-gray-900 dark:text-gray-100"
                 />
-                <span className="text-sm text-gray-500">per inch</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">per inch</span>
               </div>
             ))}
             <Button size="sm" onClick={saveBeveled} disabled={savingBeveled}>
@@ -124,20 +124,20 @@ export function EdgeWorkPricing({ onToast }: EdgeWorkPricingProps) {
       {/* Clipped Corners Pricing */}
       <Card>
         <CardContent>
-          <h3 className="text-base font-semibold text-gray-900 mb-4">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Clipped Corners Pricing ($ per corner)
           </h3>
           <table className="text-sm">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 px-3 font-medium text-gray-600">Thickness</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-600">Clip Size</th>
-                <th className="text-right py-2 px-3 font-medium text-gray-600">$ / Corner</th>
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="text-left py-2 px-3 font-medium text-gray-600 dark:text-gray-400">Thickness</th>
+                <th className="text-left py-2 px-3 font-medium text-gray-600 dark:text-gray-400">Clip Size</th>
+                <th className="text-right py-2 px-3 font-medium text-gray-600 dark:text-gray-400">$ / Corner</th>
               </tr>
             </thead>
             <tbody>
               {clipped.map((row, i) => (
-                <tr key={row.id} className="border-b border-gray-100">
+                <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700">
                   <td className="py-2 px-3">{row.glass_thickness}</td>
                   <td className="py-2 px-3 capitalize">{row.clip_size.replace('_', ' ')}</td>
                   <td className="py-2 px-3 text-right">
@@ -150,7 +150,7 @@ export function EdgeWorkPricing({ onToast }: EdgeWorkPricingProps) {
                         updated[i] = { ...row, price_per_corner: parseFloat(e.target.value) || 0 };
                         setClipped(updated);
                       }}
-                      className="border border-gray-300 rounded px-2 py-1 w-24 text-sm text-right"
+                      className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-24 text-sm text-right dark:bg-gray-900 dark:text-gray-100"
                     />
                   </td>
                 </tr>

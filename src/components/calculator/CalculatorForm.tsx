@@ -241,10 +241,10 @@ export function CalculatorForm() {
       <div className="max-w-lg mx-auto mt-12">
         <Card>
           <CardContent>
-            <p className="text-center text-gray-600">
+            <p className="text-center text-gray-600 dark:text-gray-400">
               Unable to load pricing configuration. Please check your Supabase connection.
             </p>
-            <p className="text-center text-sm text-gray-400 mt-2">{configError}</p>
+            <p className="text-center text-sm text-gray-400 dark:text-gray-500 mt-2">{configError}</p>
           </CardContent>
         </Card>
       </div>
@@ -259,7 +259,7 @@ export function CalculatorForm() {
         <motion.div custom={0} initial="hidden" animate="visible" variants={cardVariants}>
           <Card>
             <CardContent>
-              <h2 className="text-base font-semibold text-gray-900 mb-4">Customer</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Customer</h2>
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="First Name"
@@ -291,7 +291,7 @@ export function CalculatorForm() {
         <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
           <Card>
             <CardContent>
-              <h2 className="text-base font-semibold text-gray-900 mb-4">Glass Type</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Glass Type</h2>
               <div className="grid grid-cols-2 gap-4">
                 <Select
                   label="Type"
@@ -327,7 +327,7 @@ export function CalculatorForm() {
         <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
           <Card>
             <CardContent>
-              <h2 className="text-base font-semibold text-gray-900 mb-4">Dimensions</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Dimensions</h2>
               <ShapeSelector value={currentShape} onChange={handleShapeChange} />
               <div className="mt-4">
                 <DimensionInputs
@@ -350,7 +350,7 @@ export function CalculatorForm() {
         <motion.div custom={3} initial="hidden" animate="visible" variants={cardVariants}>
           <Card>
             <CardContent>
-              <h2 className="text-base font-semibold text-gray-900 mb-4">Edge Processing</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Edge Processing</h2>
               <EdgeProcessing
                 isPolished={formData.is_polished ?? false}
                 isBeveled={formData.is_beveled ?? false}

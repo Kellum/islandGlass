@@ -14,7 +14,7 @@ interface TabBarProps {
 
 export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
   return (
-    <div className="border-b border-gray-200">
+    <div className="border-b border-gray-200 dark:border-gray-700">
       <nav className="-mb-px flex space-x-1 overflow-x-auto px-1" role="tablist">
         {tabs.map((tab) => (
           <button
@@ -26,7 +26,7 @@ export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
               'relative py-3 px-4 text-sm font-medium whitespace-nowrap transition-colors',
               activeTab === tab.id
                 ? 'text-primary-600'
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             )}
           >
             {tab.label}

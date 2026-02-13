@@ -38,9 +38,9 @@ export function AuditLog({ onToast }: AuditLogProps) {
   if (entries.length === 0) {
     return (
       <div className="text-center py-16">
-        <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-1">No Changes Yet</h3>
-        <p className="text-sm text-gray-500">
+        <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">No Changes Yet</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Changes to pricing configuration will appear here.
         </p>
       </div>
@@ -66,11 +66,11 @@ export function AuditLog({ onToast }: AuditLogProps) {
                   >
                     {entry.action}
                   </Badge>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {entry.table_name}
                   </span>
                   {entry.record_id && (
-                    <span className="text-xs text-gray-400">#{entry.record_id}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">#{entry.record_id}</span>
                   )}
                 </div>
 
@@ -78,7 +78,7 @@ export function AuditLog({ onToast }: AuditLogProps) {
                 <div className="flex flex-wrap gap-4 text-xs">
                   {entry.old_values && (
                     <div>
-                      <span className="text-gray-500">Old: </span>
+                      <span className="text-gray-500 dark:text-gray-400">Old: </span>
                       <span className="text-red-600 font-mono">
                         {formatValues(entry.old_values)}
                       </span>
@@ -86,7 +86,7 @@ export function AuditLog({ onToast }: AuditLogProps) {
                   )}
                   {entry.new_values && (
                     <div>
-                      <span className="text-gray-500">New: </span>
+                      <span className="text-gray-500 dark:text-gray-400">New: </span>
                       <span className="text-green-600 font-mono">
                         {formatValues(entry.new_values)}
                       </span>
@@ -95,7 +95,7 @@ export function AuditLog({ onToast }: AuditLogProps) {
                 </div>
               </div>
 
-              <time className="text-xs text-gray-400 whitespace-nowrap">
+              <time className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
                 {new Date(entry.changed_at).toLocaleString()}
               </time>
             </div>

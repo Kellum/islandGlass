@@ -13,7 +13,7 @@ export function Toggle({ checked, onChange, label, disabled = false }: TogglePro
     <label
       className={cn(
         'flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg cursor-pointer select-none',
-        disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'
+        disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
       )}
     >
       <button
@@ -24,7 +24,7 @@ export function Toggle({ checked, onChange, label, disabled = false }: TogglePro
         onClick={() => !disabled && onChange(!checked)}
         className={cn(
           'relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors',
-          checked ? 'bg-primary-600' : 'bg-gray-200'
+          checked ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-600'
         )}
       >
         <motion.span
@@ -36,7 +36,7 @@ export function Toggle({ checked, onChange, label, disabled = false }: TogglePro
           )}
         />
       </button>
-      <span className="text-sm text-gray-700">{label}</span>
+      <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
     </label>
   );
 }

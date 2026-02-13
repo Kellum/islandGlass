@@ -45,8 +45,8 @@ export function AdminPanel() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Admin Settings</h1>
-            <p className="text-sm text-gray-500">Manage pricing configuration</p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Admin Settings</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Manage pricing configuration</p>
           </div>
           <Button variant="ghost" size="sm" onClick={logout}>
             <LogOut className="w-4 h-4 mr-1.5" />

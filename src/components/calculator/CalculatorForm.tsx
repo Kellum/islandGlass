@@ -263,13 +263,13 @@ export function CalculatorForm() {
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="First Name"
-                  placeholder="Ryan"
+                  placeholder="John"
                   value={firstName}
                   onChange={(e) => handleFirstNameChange(e.target.value)}
                 />
                 <Input
                   label="Last Name"
-                  placeholder="Kellum"
+                  placeholder="Smith"
                   value={lastName}
                   onChange={(e) => handleLastNameChange(e.target.value)}
                 />
@@ -277,7 +277,7 @@ export function CalculatorForm() {
               <div className="mt-3">
                 <Input
                   label="PO #"
-                  placeholder="Kellum-Ryan"
+                  placeholder="Smith-John"
                   hint="Auto-filled as Lastname-Firstname"
                   value={poNumber}
                   onChange={(e) => handlePoChange(e.target.value)}

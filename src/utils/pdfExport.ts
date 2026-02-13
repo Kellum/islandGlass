@@ -22,7 +22,7 @@ export async function generateQuotePdf(props: QuotePdfProps): Promise<void> {
   let filename: string;
 
   if (props.poNumber) {
-    // e.g. Kellum-Ryan-02-13-2026.pdf
+    // e.g. Smith-John-02-13-2026.pdf
     filename = `${props.poNumber}-${datePart}.pdf`;
   } else if (props.quoteNumber) {
     filename = `Island-Glass-Quote-${props.quoteNumber}-${datePart}.pdf`;

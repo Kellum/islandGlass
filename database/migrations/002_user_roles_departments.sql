@@ -1,9 +1,23 @@
 -- ============================================
--- Add User Roles and Departments
+-- Add User Roles and Departments (FIXED VERSION)
 -- Window Manufacturing System - Phase 2
+-- Handles existing data gracefully
 -- ============================================
 
--- Add department column to user_profiles if it doesn't exist
+-- First, let's see what roles currently exist
+DO $$
+DECLARE
+    existing_roles TEXT[];
+BEGIN
+    -- Get unique existing roles
+    SELECT ARRAY_AGG(DISTINCT role) INTO existing_roles
+    FROM user_profiles
+    WHERE role IS NOT NULL;
+
+    RAISE NOTICE 'Existing roles in database: %', existing_roles;
+END $$;
+
+-- Add department column if it doesn't exist
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -18,44 +32,72 @@ BEGIN
     END IF;
 END $$;
 
--- Ensure role column exists and has proper constraints
+-- Map old role values to new role values
+UPDATE user_profiles
+SET role = CASE
+    WHEN role = 'admin' THEN 'ig_admin'
+    WHEN role = 'manager' THEN 'ig_manufacturing_admin'
+    WHEN role = 'employee' THEN 'ig_employee'
+    WHEN role = 'production' THEN 'ig_manufacturing_admin'
+    WHEN role IN ('owner', 'ig_admin', 'ig_employee', 'ig_manufacturing_admin', 'sales') THEN role
+    ELSE 'ig_employee'  -- Default for unknown roles
+END
+WHERE role IS NOT NULL;
+
+-- Set default role for null values
+UPDATE user_profiles
+SET role = 'ig_employee'
+WHERE role IS NULL;
+
+-- Now add constraint (after data is cleaned)
 DO $$
 BEGIN
-    -- Check if role column has a constraint
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.constraint_column_usage
+    -- Drop old constraint if it exists
+    IF EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
         WHERE table_name = 'user_profiles'
-        AND column_name = 'role'
+        AND constraint_name = 'user_profiles_role_check'
     ) THEN
-        -- Add constraint if it doesn't exist
-        ALTER TABLE user_profiles
-        ADD CONSTRAINT user_profiles_role_check
-        CHECK (role IN ('owner', 'ig_admin', 'ig_employee', 'ig_manufacturing_admin', 'sales'));
+        ALTER TABLE user_profiles DROP CONSTRAINT user_profiles_role_check;
     END IF;
+
+    -- Add new constraint
+    ALTER TABLE user_profiles
+    ADD CONSTRAINT user_profiles_role_check
+    CHECK (role IN ('owner', 'ig_admin', 'ig_employee', 'ig_manufacturing_admin', 'sales'));
 END $$;
 
 -- Add constraint for department values
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.constraint_column_usage
+    -- Drop old constraint if it exists
+    IF EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
         WHERE table_name = 'user_profiles'
-        AND column_name = 'department'
+        AND constraint_name = 'user_profiles_department_check'
     ) THEN
-        ALTER TABLE user_profiles
-        ADD CONSTRAINT user_profiles_department_check
-        CHECK (department IN ('sales', 'manufacturing', 'admin', 'general', NULL));
+        ALTER TABLE user_profiles DROP CONSTRAINT user_profiles_department_check;
     END IF;
+
+    -- Add new constraint
+    ALTER TABLE user_profiles
+    ADD CONSTRAINT user_profiles_department_check
+    CHECK (department IN ('sales', 'manufacturing', 'admin', 'general', NULL));
 END $$;
 
--- Create index for faster role/department lookups
+-- Set default departments based on roles
+UPDATE user_profiles
+SET department = CASE
+    WHEN role = 'ig_manufacturing_admin' THEN 'manufacturing'
+    WHEN role = 'sales' THEN 'sales'
+    WHEN role IN ('owner', 'ig_admin') THEN 'admin'
+    ELSE 'general'
+END
+WHERE department IS NULL;
+
+-- Create indexes for faster role/department lookups
 CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role);
 CREATE INDEX IF NOT EXISTS idx_user_profiles_department ON user_profiles(department);
-
--- Update existing users with sensible defaults if role is null
-UPDATE user_profiles
-SET role = 'ig_employee'
-WHERE role IS NULL;
 
 -- ============================================
 -- Create helper function to check permissions
@@ -81,65 +123,47 @@ BEGIN
         RETURN TRUE;
     END IF;
 
-    -- IG Employees with manufacturing department can access order entry
-    IF user_role = 'ig_employee' AND user_dept = 'manufacturing' THEN
+    -- IG Admin has full access
+    IF user_role = 'ig_admin' THEN
         RETURN TRUE;
     END IF;
 
+    -- Manufacturing department employees have access
+    IF user_dept = 'manufacturing' THEN
+        RETURN TRUE;
+    END IF;
+
+    -- Otherwise no access
     RETURN FALSE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================
--- Create helper function for management access
+-- Verify the migration
 -- ============================================
 
-CREATE OR REPLACE FUNCTION has_window_management_access(user_id UUID)
-RETURNS BOOLEAN AS $$
-DECLARE
-    user_role TEXT;
-BEGIN
-    SELECT role INTO user_role
-    FROM user_profiles
-    WHERE id = user_id;
-
-    -- Only owners and manufacturing admins can manage orders
-    RETURN user_role IN ('owner', 'ig_manufacturing_admin');
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- ============================================
--- Verification Query
--- ============================================
-
--- Check that everything was created successfully
-DO $$
-DECLARE
-    dept_exists BOOLEAN;
-    role_constraint_exists BOOLEAN;
-BEGIN
-    -- Check department column
-    SELECT EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_name = 'user_profiles' AND column_name = 'department'
-    ) INTO dept_exists;
-
-    IF NOT dept_exists THEN
-        RAISE EXCEPTION 'Department column was not created successfully';
-    END IF;
-
-    RAISE NOTICE '✓ User roles and departments configured successfully';
-    RAISE NOTICE '✓ Helper functions created for permission checking';
-    RAISE NOTICE '✓ Indexes created for performance';
-END $$;
-
--- Display current user roles (for verification)
+-- Show updated roles and departments
 SELECT
-    COUNT(*) as total_users,
+    id,
     role,
     department,
-    COUNT(*) as count_by_role
+    created_at
 FROM user_profiles
-WHERE deleted_at IS NULL
-GROUP BY role, department
-ORDER BY role, department;
+ORDER BY created_at DESC
+LIMIT 10;
+
+-- Show role distribution
+SELECT
+    role,
+    COUNT(*) as user_count
+FROM user_profiles
+GROUP BY role
+ORDER BY user_count DESC;
+
+-- Show department distribution
+SELECT
+    department,
+    COUNT(*) as user_count
+FROM user_profiles
+GROUP BY department
+ORDER BY user_count DESC;

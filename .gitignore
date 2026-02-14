@@ -33,3 +33,6 @@ logs/
 tmp/
 temp/
 *.tmp
+
+# Checkpoints
+.checkpoints/

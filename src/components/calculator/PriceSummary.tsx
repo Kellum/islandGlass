@@ -73,29 +73,14 @@ export function PriceSummary({ result, config, hasItems }: PriceSummaryProps) {
         ) : (
           <div className="space-y-2">
             {/* Area */}
-            {showMinWarning ? (
-              <>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Actual Area:</span>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    {result.actual_sq_ft.toFixed(2)} sq ft
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-yellow-700 font-medium">Minimum Charge:</span>
-                  <span className="font-medium text-yellow-700">
-                    {config?.settings.minimum_sq_ft} sq ft
-                  </span>
-                </div>
-              </>
-            ) : (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Area:</span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {decimalToFraction(result.billable_sq_ft)} sq ft
-                </span>
-              </div>
-            )}
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600 dark:text-gray-400">Area:</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">
+                {showMinWarning
+                  ? `${result.actual_sq_ft.toFixed(2)} sq ft`
+                  : `${decimalToFraction(result.billable_sq_ft)} sq ft`}
+              </span>
+            </div>
 
             {/* Per sq ft price */}
             <div className="flex justify-between text-sm">
@@ -107,7 +92,24 @@ export function PriceSummary({ result, config, hasItems }: PriceSummaryProps) {
 
             {/* Retail line items */}
             <div className="border-t border-gray-100 dark:border-gray-700 pt-2 mt-1">
-              <PriceRow label="Glass" value={retail(result.base_price)} />
+              {showMinWarning ? (
+                <>
+                  <PriceRow
+                    label={`Glass (${result.actual_sq_ft.toFixed(2)} sq ft)`}
+                    value={retail(result.base_price) * (result.actual_sq_ft / result.billable_sq_ft)}
+                  />
+                  <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
+                    <span>{config?.settings.minimum_sq_ft} sq ft min. upcharge</span>
+                    <span className="font-medium">
+                      +<AnimatedPrice
+                        value={retail(result.base_price) * (1 - result.actual_sq_ft / result.billable_sq_ft)}
+                      />
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <PriceRow label="Glass" value={retail(result.base_price)} />
+              )}
               {result.polish_price != null && (
                 <PriceRow label="Flat Polish" value={retail(result.polish_price)} />
               )}

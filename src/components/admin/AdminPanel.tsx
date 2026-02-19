@@ -6,6 +6,7 @@ import { GlassConfigTable } from './GlassConfigTable';
 import { MarkupSettings } from './MarkupSettings';
 import { EdgeWorkPricing } from './EdgeWorkPricing';
 import { AuditLog } from './AuditLog';
+import { SuppliersTable } from './SuppliersTable';
 import { TabBar } from '../ui/TabBar';
 import { Button } from '../ui/Button';
 import { ToastContainer } from '../ui/Toast';
@@ -16,6 +17,7 @@ const TABS = [
   { id: 'wholesale', label: 'Wholesale Pricing' },
   { id: 'formula', label: 'Markup Formula' },
   { id: 'edgework', label: 'Edge Work' },
+  { id: 'suppliers', label: 'Suppliers' },
   { id: 'audit', label: 'Audit Log' },
 ];
 
@@ -68,6 +70,7 @@ export function AdminPanel() {
               {activeTab === 'wholesale' && <GlassConfigTable onToast={addToast} />}
               {activeTab === 'formula' && <MarkupSettings onToast={addToast} />}
               {activeTab === 'edgework' && <EdgeWorkPricing onToast={addToast} />}
+              {activeTab === 'suppliers' && <SuppliersTable onToast={addToast} />}
               {activeTab === 'audit' && <AuditLog onToast={addToast} />}
             </motion.div>
           </AnimatePresence>

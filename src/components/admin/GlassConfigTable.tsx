@@ -1,16 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Pencil, Trash2, Check, X, AlertTriangle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card, CardContent } from '../ui/Card';
 import { Spinner } from '../ui/Spinner';
 import {
   getGlassConfigs,
+  getSuppliers,
   createGlassConfig,
   updateGlassConfig,
   deleteGlassConfig,
 } from '../../services/adminApi';
-import type { GlassConfigRow } from '../../types';
+import type { GlassConfigRow, SupplierRow } from '../../types';
+
+type SortField = 'thickness' | 'type' | 'base_price' | 'polish_price' | 'supplier';
+type SortDir = 'asc' | 'desc';
+
+const THICKNESS_ORDER: Record<string, number> = {
+  '1/8"': 1,
+  '3/16"': 2,
+  '1/4"': 3,
+  '3/8"': 4,
+  '1/2"': 5,
+};
 
 interface GlassConfigTableProps {
   onToast: (type: 'success' | 'error', message: string) => void;
@@ -18,7 +30,10 @@ interface GlassConfigTableProps {
 
 export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
   const [configs, setConfigs] = useState<GlassConfigRow[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValues, setEditValues] = useState<Partial<GlassConfigRow>>({});
   const [showAddForm, setShowAddForm] = useState(false);
@@ -30,17 +45,27 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
     only_tempered: false,
     no_polish: false,
     never_tempered: false,
+    supplier_id: null as number | null,
   });
 
   const load = async () => {
     try {
-      const data = await getGlassConfigs();
-      setConfigs(data);
+      const [configData, supplierData] = await Promise.all([
+        getGlassConfigs(),
+        getSuppliers(),
+      ]);
+      setConfigs(configData);
+      setSuppliers(supplierData);
     } catch {
       onToast('error', 'Failed to load glass configs');
     } finally {
       setLoading(false);
     }
+  };
+
+  const supplierName = (id: number | null) => {
+    if (!id) return '—';
+    return suppliers.find((s) => s.id === id)?.name ?? '—';
   };
 
   useEffect(() => {
@@ -92,11 +117,54 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
         only_tempered: false,
         no_polish: false,
         never_tempered: false,
+        supplier_id: null,
       });
       load();
     } catch {
       onToast('error', 'Failed to create');
     }
+  };
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      if (sortDir === 'asc') {
+        setSortDir('desc');
+      } else {
+        // Third click: clear sort
+        setSortField(null);
+        setSortDir('asc');
+      }
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedConfigs = useMemo(() => {
+    if (!sortField) return configs;
+
+    return [...configs].sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'thickness') {
+        cmp = (THICKNESS_ORDER[a.thickness] ?? 99) - (THICKNESS_ORDER[b.thickness] ?? 99);
+      } else if (sortField === 'type') {
+        cmp = a.type.localeCompare(b.type);
+      } else if (sortField === 'base_price') {
+        cmp = Number(a.base_price) - Number(b.base_price);
+      } else if (sortField === 'polish_price') {
+        cmp = Number(a.polish_price) - Number(b.polish_price);
+      } else if (sortField === 'supplier') {
+        cmp = supplierName(a.supplier_id).localeCompare(supplierName(b.supplier_id));
+      }
+      return sortDir === 'desc' ? -cmp : cmp;
+    });
+  }, [configs, sortField, sortDir]);
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3.5 h-3.5 opacity-40" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="w-3.5 h-3.5 text-primary-600" />
+      : <ArrowDown className="w-3.5 h-3.5 text-primary-600" />;
   };
 
   if (loading) {
@@ -139,7 +207,7 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
             <Card>
               <CardContent>
                 <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">New Glass Configuration</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   <input
                     placeholder="Thickness"
                     value={newRow.thickness}
@@ -168,6 +236,16 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
                     onChange={(e) => setNewRow({ ...newRow, polish_price: parseFloat(e.target.value) || 0 })}
                     className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-900 dark:text-gray-100"
                   />
+                  <select
+                    value={newRow.supplier_id ?? ''}
+                    onChange={(e) => setNewRow({ ...newRow, supplier_id: e.target.value ? Number(e.target.value) : null })}
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <option value="">No Supplier</option>
+                    {suppliers.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex flex-wrap gap-4 mt-3">
                   <label className="flex items-center gap-1.5 text-sm">
@@ -198,16 +276,37 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700">
-              <th className="text-left py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Thickness</th>
-              <th className="text-left py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Type</th>
-              <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Base $/sqft</th>
-              <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Polish $/in</th>
+              <th className="text-left py-3 px-3 font-medium text-gray-600 dark:text-gray-400">
+                <button onClick={() => toggleSort('thickness')} className="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                  Thickness <SortIcon field="thickness" />
+                </button>
+              </th>
+              <th className="text-left py-3 px-3 font-medium text-gray-600 dark:text-gray-400">
+                <button onClick={() => toggleSort('type')} className="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                  Type <SortIcon field="type" />
+                </button>
+              </th>
+              <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-gray-400">
+                <button onClick={() => toggleSort('base_price')} className="inline-flex items-center gap-1 ml-auto hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                  Base $/sqft <SortIcon field="base_price" />
+                </button>
+              </th>
+              <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-gray-400">
+                <button onClick={() => toggleSort('polish_price')} className="inline-flex items-center gap-1 ml-auto hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                  Polish $/in <SortIcon field="polish_price" />
+                </button>
+              </th>
+              <th className="text-left py-3 px-3 font-medium text-gray-600 dark:text-gray-400">
+                <button onClick={() => toggleSort('supplier')} className="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                  Supplier <SortIcon field="supplier" />
+                </button>
+              </th>
               <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Flags</th>
               <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-gray-400">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {configs.map((row) => (
+            {sortedConfigs.map((row) => (
               <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
                 {editingId === row.id ? (
                   <>
@@ -243,6 +342,18 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
                         className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-20 text-sm text-right dark:bg-gray-900 dark:text-gray-100"
                       />
                     </td>
+                    <td className="py-2 px-3">
+                      <select
+                        value={editValues.supplier_id ?? ''}
+                        onChange={(e) => setEditValues({ ...editValues, supplier_id: e.target.value ? Number(e.target.value) : null })}
+                        className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-full text-sm dark:bg-gray-900 dark:text-gray-100"
+                      >
+                        <option value="">—</option>
+                        {suppliers.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td className="py-2 px-3 text-center">
                       <div className="flex gap-2 justify-center">
                         <label className="text-xs"><input type="checkbox" checked={editValues.only_tempered ?? false} onChange={(e) => setEditValues({ ...editValues, only_tempered: e.target.checked })} className="mr-1" />OT</label>
@@ -267,6 +378,7 @@ export function GlassConfigTable({ onToast }: GlassConfigTableProps) {
                     <td className="py-2 px-3 capitalize">{row.type}</td>
                     <td className="py-2 px-3 text-right tabular-nums">${Number(row.base_price).toFixed(2)}</td>
                     <td className="py-2 px-3 text-right tabular-nums">${Number(row.polish_price).toFixed(2)}</td>
+                    <td className="py-2 px-3 text-sm text-gray-600 dark:text-gray-400">{supplierName(row.supplier_id)}</td>
                     <td className="py-2 px-3 text-center text-xs text-gray-500 dark:text-gray-400">
                       {[
                         row.only_tempered && 'OT',

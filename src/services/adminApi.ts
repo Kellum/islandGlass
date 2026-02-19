@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type {
   GlassConfigRow,
+  SupplierRow,
   MarkupRow,
   BeveledPricingRow,
   ClippedCornersPricingRow,
@@ -51,6 +52,36 @@ async function logAudit(
     old_values: oldValues,
     new_values: newValues,
   });
+}
+
+// ---- Suppliers CRUD ----
+
+export async function getSuppliers(): Promise<SupplierRow[]> {
+  const { data, error } = await supabase.from('suppliers').select('*').order('name');
+  if (error) throw error;
+  return data as SupplierRow[];
+}
+
+export async function createSupplier(name: string): Promise<SupplierRow> {
+  const { data, error } = await supabase.from('suppliers').insert({ name }).select().single();
+  if (error) throw error;
+  await logAudit('suppliers', data.id, 'INSERT', null, { name });
+  return data as SupplierRow;
+}
+
+export async function updateSupplier(id: number, name: string): Promise<SupplierRow> {
+  const { data: old } = await supabase.from('suppliers').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('suppliers').update({ name }).eq('id', id).select().single();
+  if (error) throw error;
+  await logAudit('suppliers', id, 'UPDATE', old as Record<string, unknown>, { name });
+  return data as SupplierRow;
+}
+
+export async function deleteSupplier(id: number): Promise<void> {
+  const { data: old } = await supabase.from('suppliers').select('*').eq('id', id).single();
+  const { error } = await supabase.from('suppliers').delete().eq('id', id);
+  if (error) throw error;
+  await logAudit('suppliers', id, 'DELETE', old as Record<string, unknown>, null);
 }
 
 // ---- Glass Config CRUD ----

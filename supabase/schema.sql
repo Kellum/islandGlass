@@ -3,6 +3,13 @@
 -- Standalone calculator with simplified single-tenant schema
 -- ============================================================
 
+-- Suppliers (internal tracking)
+CREATE TABLE IF NOT EXISTS suppliers (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Glass Configuration (wholesale pricing)
 CREATE TABLE IF NOT EXISTS glass_config (
   id SERIAL PRIMARY KEY,
@@ -13,6 +20,7 @@ CREATE TABLE IF NOT EXISTS glass_config (
   only_tempered BOOLEAN NOT NULL DEFAULT FALSE,
   no_polish BOOLEAN NOT NULL DEFAULT FALSE,
   never_tempered BOOLEAN NOT NULL DEFAULT FALSE,
+  supplier_id INTEGER REFERENCES suppliers(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(thickness, type)
@@ -102,6 +110,7 @@ CREATE TRIGGER glass_config_updated_at
 -- Row Level Security (RLS)
 -- All tables readable by anon, writable by anon (MVP)
 -- ============================================================
+ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE glass_config ENABLE ROW LEVEL SECURITY;
 ALTER TABLE markups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE beveled_pricing ENABLE ROW LEVEL SECURITY;
@@ -112,6 +121,7 @@ ALTER TABLE pricing_formula_audit ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_config ENABLE ROW LEVEL SECURITY;
 
 -- Read policies (anon can read all)
+CREATE POLICY "anon_read_suppliers" ON suppliers FOR SELECT TO anon USING (true);
 CREATE POLICY "anon_read_glass_config" ON glass_config FOR SELECT TO anon USING (true);
 CREATE POLICY "anon_read_markups" ON markups FOR SELECT TO anon USING (true);
 CREATE POLICY "anon_read_beveled" ON beveled_pricing FOR SELECT TO anon USING (true);
@@ -122,6 +132,7 @@ CREATE POLICY "anon_read_audit" ON pricing_formula_audit FOR SELECT TO anon USIN
 CREATE POLICY "anon_read_admin" ON admin_config FOR SELECT TO anon USING (true);
 
 -- Write policies (anon can write all - PIN validated client-side for MVP)
+CREATE POLICY "anon_write_suppliers" ON suppliers FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "anon_write_glass_config" ON glass_config FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "anon_write_markups" ON markups FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "anon_write_beveled" ON beveled_pricing FOR ALL TO anon USING (true) WITH CHECK (true);

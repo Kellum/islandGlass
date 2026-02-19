@@ -2,6 +2,15 @@
 -- Island Glass Calculator - Seed Data
 -- ============================================================
 
+-- Suppliers
+INSERT INTO suppliers (name)
+VALUES
+  ('Crystal Tempering'),
+  ('M & F'),
+  ('Aldora'),
+  ('Cardinal')
+ON CONFLICT (name) DO NOTHING;
+
 -- Glass Configuration (wholesale costs)
 INSERT INTO glass_config (thickness, type, base_price, polish_price, only_tempered, no_polish, never_tempered)
 VALUES

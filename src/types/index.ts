@@ -8,6 +8,12 @@ export type {
 } from '../services/calculator';
 
 // Database row types (matching Supabase tables)
+export interface SupplierRow {
+  id: number;
+  name: string;
+  created_at: string;
+}
+
 export interface GlassConfigRow {
   id: number;
   thickness: string;
@@ -17,6 +23,7 @@ export interface GlassConfigRow {
   only_tempered: boolean;
   no_polish: boolean;
   never_tempered: boolean;
+  supplier_id: number | null;
   created_at: string;
   updated_at: string;
 }

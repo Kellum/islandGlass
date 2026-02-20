@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import type {
   GlassConfigRow,
   SupplierRow,
+  LocationRow,
   MarkupRow,
   BeveledPricingRow,
   ClippedCornersPricingRow,
@@ -82,6 +83,45 @@ export async function deleteSupplier(id: number): Promise<void> {
   const { error } = await supabase.from('suppliers').delete().eq('id', id);
   if (error) throw error;
   await logAudit('suppliers', id, 'DELETE', old as Record<string, unknown>, null);
+}
+
+// ---- Locations CRUD ----
+
+export async function getLocations(): Promise<LocationRow[]> {
+  const { data, error } = await supabase.from('locations').select('*').order('name');
+  if (error) throw error;
+  return data as LocationRow[];
+}
+
+export async function createLocation(name: string, location_number: number): Promise<LocationRow> {
+  const { data, error } = await supabase
+    .from('locations')
+    .insert({ name, location_number })
+    .select()
+    .single();
+  if (error) throw error;
+  await logAudit('locations', data.id, 'INSERT', null, { name, location_number });
+  return data as LocationRow;
+}
+
+export async function updateLocation(id: number, name: string, location_number: number): Promise<LocationRow> {
+  const { data: old } = await supabase.from('locations').select('*').eq('id', id).single();
+  const { data, error } = await supabase
+    .from('locations')
+    .update({ name, location_number })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  await logAudit('locations', id, 'UPDATE', old as Record<string, unknown>, { name, location_number });
+  return data as LocationRow;
+}
+
+export async function deleteLocation(id: number): Promise<void> {
+  const { data: old } = await supabase.from('locations').select('*').eq('id', id).single();
+  const { error } = await supabase.from('locations').delete().eq('id', id);
+  if (error) throw error;
+  await logAudit('locations', id, 'DELETE', old as Record<string, unknown>, null);
 }
 
 // ---- Glass Config CRUD ----

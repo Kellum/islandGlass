@@ -155,7 +155,6 @@ export function QuoteDetail() {
                   </div>
                   {quote.po_number && (
                     <div>
-                      <span className="text-gray-500 dark:text-gray-400">PO #: </span>
                       <span className="text-gray-900 dark:text-gray-100 font-medium">{quote.po_number}</span>
                     </div>
                   )}

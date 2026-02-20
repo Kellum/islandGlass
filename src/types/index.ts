@@ -14,6 +14,13 @@ export interface SupplierRow {
   created_at: string;
 }
 
+export interface LocationRow {
+  id: number;
+  name: string;
+  location_number: number;
+  created_at: string;
+}
+
 export interface GlassConfigRow {
   id: number;
   thickness: string;

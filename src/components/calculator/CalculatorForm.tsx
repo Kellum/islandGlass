@@ -14,6 +14,7 @@ import { SaveQuoteModal } from './SaveQuoteModal';
 import { useSupabaseConfig } from '../../hooks/useSupabaseConfig';
 import { useCalculator } from '../../hooks/useCalculator';
 import { useQuoteItems } from '../../hooks/useQuoteItems';
+import { useLocations } from '../../hooks/useLocations';
 import { Spinner } from '../ui/Spinner';
 import { saveQuote } from '../../services/quoteApi';
 import { generateQuotePdf } from '../../utils/pdfExport';
@@ -68,26 +69,48 @@ export function CalculatorForm() {
     resetForm,
   } = useCalculator(config);
   const { items, addItem, removeItem, clearItems, grandTotal } = useQuoteItems();
+  const { locations } = useLocations();
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Customer info lives in the main form
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [selectedLocationId, setSelectedLocationId] = useState('');
   const [poNumber, setPoNumber] = useState('');
   const [poManuallyEdited, setPoManuallyEdited] = useState(false);
+
+  const getLocationPadded = (locationId: string): string => {
+    const loc = locations.find((l) => l.id === Number(locationId));
+    if (!loc) return '00';
+    return String(loc.location_number).padStart(2, '0');
+  };
+
+  const generatePoNumber = (first: string, last: string, locationId: string): string => {
+    const namePart = [last, first].filter(Boolean).join('-');
+    if (!locationId) return namePart;
+    if (!namePart) return `PO-${getLocationPadded(locationId)}`;
+    return `PO-${getLocationPadded(locationId)}-${namePart}`;
+  };
 
   const handleFirstNameChange = (value: string) => {
     setFirstName(value);
     if (!poManuallyEdited) {
-      setPoNumber([lastName, value].filter(Boolean).join('-'));
+      setPoNumber(generatePoNumber(value, lastName, selectedLocationId));
     }
   };
 
   const handleLastNameChange = (value: string) => {
     setLastName(value);
     if (!poManuallyEdited) {
-      setPoNumber([value, firstName].filter(Boolean).join('-'));
+      setPoNumber(generatePoNumber(firstName, value, selectedLocationId));
+    }
+  };
+
+  const handleLocationChange = (locationId: string) => {
+    setSelectedLocationId(locationId);
+    if (!poManuallyEdited) {
+      setPoNumber(generatePoNumber(firstName, lastName, locationId));
     }
   };
 
@@ -275,10 +298,24 @@ export function CalculatorForm() {
                 />
               </div>
               <div className="mt-3">
+                <Select
+                  label="Location"
+                  value={selectedLocationId}
+                  onChange={(e) => handleLocationChange(e.target.value)}
+                  options={[
+                    { value: '', label: 'Select a location...' },
+                    ...locations.map((loc) => ({
+                      value: String(loc.id),
+                      label: `${loc.name} (#${String(loc.location_number).padStart(2, '0')})`,
+                    })),
+                  ]}
+                />
+              </div>
+              <div className="mt-3">
                 <Input
                   label="PO #"
-                  placeholder="Smith-John"
-                  hint="Auto-filled as Lastname-Firstname"
+                  placeholder="PO-01-Smith-John"
+                  hint="Auto-filled as PO-{Location#}-Lastname-Firstname"
                   value={poNumber}
                   onChange={(e) => handlePoChange(e.target.value)}
                 />

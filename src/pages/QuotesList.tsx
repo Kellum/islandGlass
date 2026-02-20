@@ -109,7 +109,7 @@ export function QuotesList() {
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                         {quote.po_number
-                          ? `PO: ${quote.po_number}`
+                          ? quote.po_number
                           : [quote.customer_first_name, quote.customer_last_name].filter(Boolean).join(' ') || 'No customer name'}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500">

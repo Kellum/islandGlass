@@ -7,6 +7,7 @@ import { MarkupSettings } from './MarkupSettings';
 import { EdgeWorkPricing } from './EdgeWorkPricing';
 import { AuditLog } from './AuditLog';
 import { SuppliersTable } from './SuppliersTable';
+import { LocationsTable } from './LocationsTable';
 import { TabBar } from '../ui/TabBar';
 import { Button } from '../ui/Button';
 import { ToastContainer } from '../ui/Toast';
@@ -18,6 +19,7 @@ const TABS = [
   { id: 'formula', label: 'Markup Formula' },
   { id: 'edgework', label: 'Edge Work' },
   { id: 'suppliers', label: 'Suppliers' },
+  { id: 'locations', label: 'Locations' },
   { id: 'audit', label: 'Audit Log' },
 ];
 
@@ -71,6 +73,7 @@ export function AdminPanel() {
               {activeTab === 'formula' && <MarkupSettings onToast={addToast} />}
               {activeTab === 'edgework' && <EdgeWorkPricing onToast={addToast} />}
               {activeTab === 'suppliers' && <SuppliersTable onToast={addToast} />}
+              {activeTab === 'locations' && <LocationsTable onToast={addToast} />}
               {activeTab === 'audit' && <AuditLog onToast={addToast} />}
             </motion.div>
           </AnimatePresence>

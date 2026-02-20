@@ -231,7 +231,7 @@ export function QuotePdfDocument(props: QuotePdfProps) {
               <Text style={styles.quoteNumber}>#{quoteNumber}</Text>
             )}
             {poNumber && (
-              <Text style={styles.quoteNumber}>PO: {poNumber}</Text>
+              <Text style={styles.quoteNumber}>{poNumber}</Text>
             )}
             <Text style={styles.quoteDate}>Date: {formatDate(createdAt)}</Text>
             {expiresAt && (
